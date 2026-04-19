@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutorial 1 - Puterea vocii tale</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #f5f4f0; padding: 1.5rem; }
+.container { max-width: 680px; margin: 0 auto; }
+.hero {
+  background: linear-gradient(135deg, #534AB7 0%, #3C3489 100%);
+  padding: 2rem 1.5rem 1.5rem; border-radius: 12px;
+  margin-bottom: 1.5rem; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.hero-badge {
+  display: inline-block; background: rgba(255,255,255,0.15);
+  color: #EEEDFE; font-size: 11px; font-weight: 500;
+  padding: 4px 10px; border-radius: 20px; margin-bottom: 10px;
+}
+.hero h1 { color: #fff; font-size: 20px; font-weight: 500; line-height: 1.3; margin-bottom: 8px; }
+.hero p { color: #CECBF6; font-size: 13px; line-height: 1.6; }
+.hero-meta { display: flex; gap: 16px; margin-top: 14px; }
+.hero-meta span { color: #AFA9EC; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+.progress-bar-outer {
+  background: rgba(255,255,255,0.15); border-radius: 10px;
+  height: 6px; margin-top: 14px; overflow: hidden;
+}
+.progress-bar-inner {
+  height: 100%; border-radius: 10px; background: #9FE1CB;
+  width: 0%; transition: width 0.6s ease;
+}
+.progress-label { color: #AFA9EC; font-size: 11px; margin-top: 5px; }
+.levels-nav {
+  display: flex; gap: 6px; overflow-x: auto;
+  padding-bottom: 4px; margin-bottom: 1.25rem; scrollbar-width: none;
+}
+.levels-nav::-webkit-scrollbar { display: none; }
+.level-dot {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+  border: 0.5px solid #ddd; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500; color: #666; cursor: pointer; transition: all 0.2s;
+}
+.level-dot.active { background: #534AB7; border-color: #534AB7; color: #fff; }
+.level-dot.done { background: #1D9E75; border-color: #1D9E75; color: #fff; }
+.level-card {
+  background: #fff; border: 0.5px solid #ddd;
+  border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
+}
+.level-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.level-icon {
+  width: 36px; height: 36px; border-radius: 50%; background: #EEEDFE;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 500; color: #534AB7; flex-shrink: 0;
+}
+.level-title { font-size: 15px; font-weight: 500; color: #1a1a1a; }
+.level-time { font-size: 12px; color: #888; margin-top: 2px; }
+.level-body { font-size: 14px; color: #555; line-height: 1.7; }
+.level-body strong { font-weight: 500; color: #1a1a1a; }
+.callout {
+  border-left: 3px solid #534AB7; background: #EEEDFE;
+  border-radius: 0 8px 8px 0; padding: 10px 14px;
+  margin: 12px 0; font-size: 13px; color: #3C3489; line-height: 1.6;
+}
+.callout-green { border-left-color: #1D9E75; background: #E1F5EE; color: #0F6E56; }
+.callout-amber { border-left-color: #BA7517; background: #FAEEDA; color: #854F0B; }
+.callout-red { border-left-color: #A32D2D; background: #FCEBEB; color: #791F1F; }
+
+.activity-box {
+  background: #f8f7ff; border: 1.5px solid #AFA9EC;
+  border-radius: 10px; padding: 1rem 1.25rem; margin: 14px 0;
+}
+.activity-title {
+  font-size: 12px; font-weight: 500; color: #534AB7;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+}
+.activity-question { font-size: 14px; color: #1a1a1a; font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
+
+.poll-options { display: flex; flex-direction: column; gap: 8px; }
+.poll-option {
+  padding: 10px 14px; border-radius: 8px;
+  border: 1.5px solid #ddd; background: #fff;
+  font-size: 13px; color: #333; cursor: pointer;
+  transition: all 0.2s; text-align: left;
+}
+.poll-option:hover { border-color: #534AB7; background: #EEEDFE; color: #3C3489; }
+.poll-option.selected { border-color: #534AB7; background: #534AB7; color: #fff; }
+.poll-option.selected-green { border-color: #1D9E75; background: #1D9E75; color: #fff; }
+.poll-option.selected-amber { border-color: #BA7517; background: #BA7517; color: #fff; }
+
+.feedback-box {
+  margin-top: 12px; padding: 10px 14px;
+  border-radius: 8px; font-size: 13px; line-height: 1.6;
+  display: none;
+}
+.feedback-correct { background: #E1F5EE; color: #0F6E56; border: 1px solid #9FE1CB; }
+.feedback-wrong { background: #FCEBEB; color: #791F1F; border: 1px solid #F7C1C1; }
+.feedback-neutral { background: #EEEDFE; color: #3C3489; border: 1px solid #AFA9EC; }
+
+.quiz-item { margin-bottom: 16px; }
+.quiz-statement { font-size: 14px; color: #1a1a1a; font-weight: 500; margin-bottom: 8px; line-height: 1.5; }
+.quiz-btns { display: flex; gap: 8px; }
+.quiz-btn {
+  padding: 7px 18px; border-radius: 8px;
+  border: 1.5px solid #ddd; background: #fff;
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+}
+.quiz-btn:hover { border-color: #534AB7; }
+.quiz-btn.correct { background: #1D9E75; border-color: #1D9E75; color: #fff; }
+.quiz-btn.wrong { background: #E24B4A; border-color: #E24B4A; color: #fff; }
+.quiz-btn:disabled { cursor: default; opacity: 0.7; }
+.quiz-feedback { font-size: 12px; margin-top: 5px; min-height: 16px; }
+.quiz-feedback.ok { color: #0F6E56; }
+.quiz-feedback.nok { color: #A32D2D; }
+
+.persona-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.persona { padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+.persona-bad { background: #FCEBEB; color: #791F1F; border: 0.5px solid #F7C1C1; }
+.persona-good { background: #EAF3DE; color: #27500A; border: 0.5px solid #C0DD97; }
+.persona-name { font-weight: 500; font-size: 12px; margin-bottom: 4px; }
+
+.sort-container { display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap; }
+.sort-bank { flex: 1; min-width: 140px; }
+.sort-bank-title { font-size: 12px; font-weight: 500; color: #534AB7; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
+.sort-items { display: flex; flex-direction: column; gap: 6px; min-height: 40px; }
+.sort-item {
+  padding: 8px 12px; border-radius: 8px;
+  background: #EEEDFE; border: 1.5px solid #AFA9EC;
+  font-size: 13px; color: #3C3489; cursor: pointer;
+  transition: all 0.2s; user-select: none;
+}
+.sort-item:hover { background: #534AB7; color: #fff; border-color: #534AB7; }
+.sort-item.placed-closed { background: #FCEBEB; border-color: #F7C1C1; color: #791F1F; }
+.sort-item.placed-open { background: #EAF3DE; border-color: #9FE1CB; color: #27500A; }
+.sort-drop {
+  min-height: 80px; border-radius: 8px; padding: 8px;
+  border: 2px dashed #ddd; background: #fafafa;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sort-drop.closed-zone { border-color: #F7C1C1; background: #fff8f8; }
+.sort-drop.open-zone { border-color: #9FE1CB; background: #f8fff8; }
+.sort-drop-label { font-size: 11px; color: #aaa; text-align: center; margin: auto; }
+
+.star-visual { width: 100%; max-width: 260px; display: block; margin: 12px auto; }
+.star-tip { cursor: pointer; transition: opacity 0.2s; }
+.star-tip:hover { opacity: 0.75; }
+.star-popup {
+  background: #534AB7; color: #fff; border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; line-height: 1.5;
+  margin: 8px 0; display: none;
+}
+
+.class-activity {
+  background: #FAEEDA; border: 1.5px solid #EF9F27;
+  border-radius: 10px; padding: 1rem; margin: 14px 0;
+}
+.class-activity-label { font-size: 11px; font-weight: 500; color: #854F0B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.class-activity p { font-size: 13px; color: #633806; line-height: 1.6; }
+
+.nav-btns { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+.btn {
+  padding: 10px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+}
+.btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-primary { background: #534AB7; color: #fff; }
+.btn-outline { background: transparent; color: #666; border: 0.5px solid #ddd; }
+.btn-outline:hover { background: #f0efea; }
+.btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+.score-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: #EEEDFE; border-radius: 8px; padding: 8px 14px;
+  margin-bottom: 1rem; font-size: 13px; color: #534AB7; font-weight: 500;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <div class="hero-badge">Tutorialul 1</div>
+  <h1>Superputerea ta ascuns&#259; &mdash; Ne mir&#259;m, deci exist&#259;m!</h1>
+  <p>Modulul: Dreptul la informare &nbsp;&middot;&nbsp; Platforma <em>Puterea vocii tale</em></p>
+  <div class="hero-meta">
+    <span>&#x23F1; ~50 minute</span>
+    <span>&#9733; 6 leveluri</span>
+  </div>
+  <div class="progress-bar-outer">
+    <div class="progress-bar-inner" id="progressBar"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">0 din 6 leveluri completate</div>
+</div>
+
+<div class="score-bar">&#127942; Puncte acumulate: <span id="scoreDisplay">0</span></div>
+
+<div class="levels-nav" id="levelsNav"></div>
+<div id="levelContent"></div>
+
+<div class="nav-btns">
+  <button class="btn btn-outline" id="prevBtn" disabled>&larr; &Icirc;napoi</button>
+  <button class="btn btn-primary" id="nextBtn">&Icirc;nainte &rarr;</button>
+</div>
+
+</div>
+
+<!-- TEMPLATES -->
+<div id="all-templates" style="display:none">
+
+<!-- LEVEL 1 -->
+<div id="tpl-0">
+  <p class="level-body">G&#226;ndeste-te la un copil de 3-4 ani. Ce face el toat&#259; ziua? Arat&#259; cu degetul &#351;i &#238;ntreab&#259; obsesiv: <strong>&#8222;De ce plou&#259;? De ce e cerul albastru? De ce?&#8221;</strong> Acea curiozitate pur&#259; se nume&#351;te <strong>capacitatea de a ne mira</strong>.</p>
+  <div class="callout">
+    Albert Einstein: <em>&#8222;Cel mai important lucru este s&#259; nu ne oprim niciodat&#259; din a pune &#238;ntreb&#259;ri.&#8221;</em>
+  </div>
+  <p class="level-body" style="margin-top:10px;">Pe m&#259;sur&#259; ce cre&#351;tem, uneori uit&#259;m s&#259; ne mai mir&#259;m. Mirarea este <strong>cheia magic&#259;</strong> a cunoa&#351;terii &#351;i &#238;&#539;i activeaz&#259; g&#226;ndirea critic&#259;.</p>
+
+  <div class="activity-box">
+    <div class="activity-title">&#128161; &Icirc;ntrebare de pornire</div>
+    <div class="activity-question">Care este o &#238;ntrebare pe care ai pus-o recent pentru c&#259; ai vrut s&#259; &#238;n&#539;elegi mai bine ceva?</div>
+    <div class="callout-neutral" style="background:#f8f7ff;border-left:3px solid #AFA9EC;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#534AB7;">
+      G&#226;ndeste-te la r&#259;spuns &#8212; &#238;l vom discuta &#238;mpreun&#259; la clas&#259;! &#128221;
+    </div>
+  </div>
+
+  <div class="activity-box">
+    <div class="activity-title">&#128202; Mini-poll: Tu ce crezi?</div>
+    <div class="activity-question">Curiozitatea te ajut&#259; sau te &#238;ncurc&#259; la &#351;coal&#259;?</div>
+    <div class="poll-options" id="poll1">
+      <button class="poll-option" data-poll="1" data-val="a">Curiozitatea m&#259; ajut&#259; la &#351;coal&#259;</button>
+      <button class="poll-option" data-poll="1" data-val="b">Curiozitatea m&#259; &#238;ncurc&#259;</button>
+      <button class="poll-option" data-poll="1" data-val="c">Depinde de situa&#539;ie</button>
+    </div>
+    <div class="feedback-box feedback-correct" id="poll1-fb-a">&#127881; Exact! Curiozitatea este motorul &#238;nv&#259;&#539;&#259;rii. Einstein, Newton, Marie Curie &#8212; to&#539;i au &#238;nceput cu o &#238;ntrebare simpl&#259;.</div>
+    <div class="feedback-box feedback-neutral" id="poll1-fb-b">&#128161; Interesant punct de vedere! G&#226;nde&#351;te-te totu&#351;i: f&#259;r&#259; curiozitate, am &#351;ti azi c&#259; P&#259;m&#226;ntul e rotund?</div>
+    <div class="feedback-box feedback-correct" id="poll1-fb-c">&#128077; R&#259;spuns matur! Curiozitatea aplicat&#259; inteligent este cea mai bun&#259; unealt&#259; a unui elev.</div>
+  </div>
+</div>
+
+<!-- LEVEL 2 -->
+<div id="tpl-1">
+  <p class="level-body">&#206;n Roma antic&#259;, copil&#259;ria se numea <em>&#8222;infantia&#8221;</em> &#8212; stadiul &#238;n care <strong>nu ai dreptul s&#259; vorbe&#351;ti</strong>. Din fericire, ast&#259;zi tr&#259;im &#238;ntr-o societate democratic&#259;!</p>
+  <div class="callout">
+    <strong>Conven&#539;ia ONU, Art. 13 &#351;i 17:</strong> Copiii au dreptul la liber&#259; exprimare &#351;i de a avea acces la informa&#539;ii benefice dezvolt&#259;rii lor.
+  </div>
+  <p class="level-body" style="margin-top:10px;">Informa&#539;ia se ob&#539;ine &#238;ntr-un singur fel: <strong>av&#226;nd curajul s&#259; formulezi &#238;ntreb&#259;ri</strong>.</p>
+
+  <div class="activity-box">
+    <div class="activity-title">&#10067; Adev&#259;rat sau Fals?</div>
+    <div class="activity-question">Alege r&#259;spunsul corect pentru fiecare afirma&#539;ie:</div>
+
+    <div class="quiz-item">
+      <div class="quiz-statement">1. Copiii au dreptul s&#259; &#238;&#351;i exprime ideile.</div>
+      <div class="quiz-btns">
+        <button class="quiz-btn" data-q="q1" data-answer="true" data-correct="true">Adev&#259;rat</button>
+        <button class="quiz-btn" data-q="q1" data-answer="false" data-correct="true">Fals</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q1"></div>
+    </div>
+
+    <div class="quiz-item">
+      <div class="quiz-statement">2. &#206;n Roma antic&#259;, copil&#259;ria &#238;nsemna libertate deplin&#259; de exprimare.</div>
+      <div class="quiz-btns">
+        <button class="quiz-btn" data-q="q2" data-answer="true" data-correct="false">Adev&#259;rat</button>
+        <button class="quiz-btn" data-q="q2" data-answer="false" data-correct="false">Fals</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q2"></div>
+    </div>
+
+    <div class="quiz-item">
+      <div class="quiz-statement">3. Pentru a lua decizii bune, avem nevoie de informa&#539;ii.</div>
+      <div class="quiz-btns">
+        <button class="quiz-btn" data-q="q3" data-answer="true" data-correct="true">Adev&#259;rat</button>
+        <button class="quiz-btn" data-q="q3" data-answer="false" data-correct="true">Fals</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q3"></div>
+    </div>
+
+    <div class="quiz-item">
+      <div class="quiz-statement">4. Conven&#539;ia ONU protejeaz&#259; dreptul la informare al copiilor.</div>
+      <div class="quiz-btns">
+        <button class="quiz-btn" data-q="q4" data-answer="true" data-correct="true">Adev&#259;rat</button>
+        <button class="quiz-btn" data-q="q4" data-answer="false" data-correct="true">Fals</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q4"></div>
+    </div>
+
+    <div class="feedback-box feedback-correct" id="quiz-final-fb" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- LEVEL 3 -->
+<div id="tpl-2">
+  <p class="level-body" style="margin-bottom:10px;">Doamna dirigint&#259; trimite pe WhatsApp: <em>&#8222;Vineri vom participa la un PROIECT SECRET. Prezen&#539;a obligatorie! Nu uita&#539;i s&#259; v&#259; aduce&#539;i echipamentul special!&#8221;</em></p>
+  <div class="persona-grid">
+    <div class="persona persona-bad">
+      <div class="persona-name">Tudor</div>
+      Intr&#259; &#238;n panic&#259;. Vine cu rucsac uria&#351; cu mingi, rachet&#259; de tenis &#351;i trei treninguri. Nu a pus nicio &#238;ntrebare.
+    </div>
+    <div class="persona persona-good">
+      <div class="persona-name">Sofia</div>
+      Se mir&#259;, pune 3 &#238;ntreb&#259;ri dirigintei &#351;i afl&#259; c&#259; e vorba de plantat cop&#259;cei. Aduce doar m&#259;nu&#351;i de gr&#259;din&#259;rit.
+    </div>
+  </div>
+
+  <div class="activity-box">
+    <div class="activity-title">&#127919; Alege reac&#539;ia ta</div>
+    <div class="activity-question">Tu cu cine semeni mai mult &#238;n aceast&#259; situa&#539;ie?</div>
+    <div class="poll-options" id="poll3">
+      <button class="poll-option" data-poll="3" data-val="a">Reac&#539;ionez ca Tudor &#8212; intru &#238;n panic&#259; f&#259;r&#259; s&#259; &#238;ntreb</button>
+      <button class="poll-option" data-poll="3" data-val="b">Reac&#539;ionez ca Sofia &#8212; pun &#238;ntreb&#259;ri &#238;nainte s&#259; trag concluzii</button>
+      <button class="poll-option" data-poll="3" data-val="c">Uneori ca Tudor, uneori ca Sofia &#8212; depinde de situa&#539;ie</button>
+    </div>
+    <div class="feedback-box feedback-neutral" id="poll3-fb-a">&#128161; Onestitate maxim&#259;! Vestea bun&#259;: con&#351;tientizarea este primul pas spre schimbare. Dup&#259; acest tutorial, vei reac&#539;iona diferit!</div>
+    <div class="feedback-box feedback-correct" id="poll3-fb-b">&#127775; Felicit&#259;ri! E&#351;ti deja un g&#226;nditor critic. Continu&#259; a&#351;a!</div>
+    <div class="feedback-box feedback-correct" id="poll3-fb-c">&#128077; R&#259;spuns realist &#351;i matur! Important este s&#259; &#238;&#539;i dai seama &#238;n ce momente ui&#539;i s&#259; pui &#238;ntreb&#259;ri.</div>
+  </div>
+
+  <div class="class-activity">
+    <div class="class-activity-label">&#128106; Activitate pentru clas&#259;</div>
+    <p>Scrie &#238;n caiet <strong>3 &#238;ntreb&#259;ri</strong> pe care Sofia le-ar putea trimite dirigintei pentru a dezlega misterul. Le vom discuta &#238;mpreun&#259; la ora urm&#259;toare!</p>
+  </div>
+</div>
+
+<!-- LEVEL 4 -->
+<div id="tpl-3">
+  <p class="level-body" style="margin-bottom:10px;"><strong>Modul &#238;n care pui o &#238;ntrebare dicteaz&#259; calitatea r&#259;spunsului.</strong></p>
+  <div class="callout" style="margin-bottom:8px;">
+    <strong>&#206;ntreb&#259;ri &#238;nchise:</strong> cer confirmare, r&#259;spuns scurt Da/Nu &#8212; omoar&#259; conversa&#539;ia.
+  </div>
+  <div class="callout callout-green">
+    <strong>&#206;ntreb&#259;ri deschise:</strong> &#238;ncep cu Cine? Ce? C&#226;nd? Unde? Cum? De ce? &#8212; deschid conversa&#539;ia.
+  </div>
+
+  <div class="activity-box">
+    <div class="activity-title">&#127922; Exerci&#539;iu de sortare</div>
+    <div class="activity-question">D&#259; click pe fiecare &#238;ntrebare &#351;i plaseaz-o &#238;n categoria corect&#259;:</div>
+
+    <div style="margin-bottom:10px;">
+      <div style="font-size:12px;color:#888;margin-bottom:6px;">&#206;ntreb&#259;ri de sortat:</div>
+      <div class="sort-items" id="sortBank"></div>
+    </div>
+
+    <div class="sort-container">
+      <div class="sort-bank">
+        <div class="sort-bank-title" style="color:#A32D2D;">&#10060; &#206;nchise</div>
+        <div class="sort-drop closed-zone" id="closedZone">
+          <div class="sort-drop-label" id="closedEmpty">Plaseaz&#259; aici</div>
+        </div>
+      </div>
+      <div class="sort-bank">
+        <div class="sort-bank-title" style="color:#0F6E56;">&#10004; Deschise</div>
+        <div class="sort-drop open-zone" id="openZone">
+          <div class="sort-drop-label" id="openEmpty">Plaseaz&#259; aici</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="checkSort" style="margin-top:10px;font-size:13px;padding:8px 16px;">Verific&#259; r&#259;spunsurile</button>
+    <div class="feedback-box" id="sortFeedback" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="class-activity">
+    <div class="class-activity-label">&#128106; Activitate pentru clas&#259;</div>
+    <p>Transform&#259; o &#238;ntrebare &#238;nchis&#259; &#238;ntr-una deschis&#259;. Exemplu: <em>&#8222;Ai &#238;nv&#259;&#539;at?&#8221;</em> devine <em>&#8222;Ce ai &#238;nv&#259;&#539;at ast&#259;zi &#351;i cum te ajut&#259; &#238;n via&#539;&#259;?&#8221;</em> &#8212; Preg&#259;te&#351;te exemplul t&#259;u pentru or&#259;!</p>
+  </div>
+</div>
+
+<!-- LEVEL 5 -->
+<div id="tpl-4">
+  <p class="level-body" style="margin-bottom:10px;">Metoda <strong>Explozia Stelar&#259; (Starbursting)</strong> &#8212; pune &#238;n centrul unei stele problema ta &#351;i la fiecare col&#539; o &#238;ntrebare interogativ&#259;. D&#259; click pe fiecare col&#539; al stelei!</p>
+
+  <svg class="star-visual" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="150,25 173,100 252,100 190,148 213,223 150,175 87,223 110,148 48,100 127,100" fill="#EEEDFE" stroke="#534AB7" stroke-width="2"/>
+    <rect x="110" y="128" width="80" height="44" rx="8" fill="#534AB7"/>
+    <text x="150" y="148" text-anchor="middle" fill="#fff" font-size="10" font-weight="500">DREPTURILE</text>
+    <text x="150" y="163" text-anchor="middle" fill="#CECBF6" font-size="9">MELE IN SCOALA</text>
+
+    <g class="star-tip" id="tip-ce" onclick="showTip('ce')">
+      <circle cx="150" cy="28" r="18" fill="#534AB7" opacity="0.15"/>
+      <text x="150" y="33" text-anchor="middle" fill="#3C3489" font-size="13" font-weight="600">CE?</text>
+    </g>
+    <g class="star-tip" id="tip-cine" onclick="showTip('cine')">
+      <circle cx="252" cy="100" r="20" fill="#534AB7" opacity="0.15"/>
+      <text x="252" y="105" text-anchor="middle" fill="#3C3489" font-size="13" font-weight="600">CINE?</text>
+    </g>
+    <g class="star-tip" id="tip-cand" onclick="showTip('cand')">
+      <circle cx="213" cy="223" r="20" fill="#534AB7" opacity="0.15"/>
+      <text x="213" y="228" text-anchor="middle" fill="#3C3489" font-size="13" font-weight="600">CAND?</text>
+    </g>
+    <g class="star-tip" id="tip-unde" onclick="showTip('unde')">
+      <circle cx="87" cy="223" r="20" fill="#534AB7" opacity="0.15"/>
+      <text x="87" y="228" text-anchor="middle" fill="#3C3489" font-size="13" font-weight="600">UNDE?</text>
+    </g>
+    <g class="star-tip" id="tip-dece" onclick="showTip('dece')">
+      <circle cx="48" cy="100" r="20" fill="#534AB7" opacity="0.15"/>
+      <text x="48" y="105" text-anchor="middle" fill="#3C3489" font-size="11" font-weight="600">DE CE?</text>
+    </g>
+  </svg>
+
+  <div class="star-popup" id="popup-ce">&#10067; <strong>CE</strong> drepturi am dac&#259; un coleg m&#259; jigne&#351;te online?</div>
+  <div class="star-popup" id="popup-cine">&#128100; <strong>CINE</strong> ar trebui s&#259; intervin&#259; c&#226;nd drepturile mele sunt &#238;nc&#259;lcate?</div>
+  <div class="star-popup" id="popup-cand">&#128336; <strong>C&#194;ND</strong> &#238;ncep s&#259; se aplice drepturile copilului &#238;n via&#539;a mea?</div>
+  <div class="star-popup" id="popup-unde">&#127968; <strong>UNDE</strong> pot cere ajutor dac&#259; drepturile mele nu sunt respectate?</div>
+  <div class="star-popup" id="popup-dece">&#128161; <strong>DE CE</strong> sunt uneori ignorate p&#259;rerile noastre de c&#259;tre adul&#539;i?</div>
+
+  <div class="class-activity" style="margin-top:14px;">
+    <div class="class-activity-label">&#128106; Mini-challenge pentru clas&#259;</div>
+    <p>Deseneaz&#259; steaua &#238;n caiet &#351;i completeaz-o pentru tema: <strong>Regulile clasei</strong>. Ce &#238;ntreb&#259;ri ai pentru fiecare col&#539;? Le discut&#259;m la or&#259;!</p>
+  </div>
+</div>
+
+<!-- LEVEL 6 -->
+<div id="tpl-5">
+  <p class="level-body" style="margin-bottom:10px;">TikTok-ul &#351;i Instagram-ul sunt pline de informa&#539;ii. Dar oare toate sunt reale? E&#351;ti gata s&#259; devii un <strong>Mythbuster</strong>?</p>
+
+  <div class="callout callout-amber">
+    <strong>Misiunea ta:</strong> Detecteaz&#259; o informa&#539;ie suspect&#259; de pe social media &#351;i aplic&#259; filtrul g&#226;ndirii critice!
+  </div>
+
+  <div class="activity-box">
+    <div class="activity-title">&#127919; Pa&#351;ii misiunii tale</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:26px;height:26px;border-radius:50%;background:#534AB7;color:#fff;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+        <div style="font-size:13px;color:#333;line-height:1.5;">G&#259;se&#351;te un clip sau o postare cu o <strong>&#351;tire &#351;ocant&#259;</strong> despre copii sau &#351;coal&#259; care &#539;i se pare suspect&#259;.</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:26px;height:26px;border-radius:50%;background:#534AB7;color:#fff;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+        <div style="font-size:13px;color:#333;line-height:1.5;">Aplic&#259; <strong>Explozia Stelar&#259;</strong>: formuleaz&#259; 3 &#238;ntreb&#259;ri deschise &#8212; Cine confirm&#259;? De ce a fost creat? Ce surse are?</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:26px;height:26px;border-radius:50%;background:#534AB7;color:#fff;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+        <div style="font-size:13px;color:#333;line-height:1.5;">Explic&#259; &#238;n caiet de ce informa&#539;ia trebuie verificat&#259; &#238;nainte de a fi distribuit&#259;.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="class-activity">
+    <div class="class-activity-label">&#128106; Activitate pentru clas&#259;</div>
+    <p>Te rog s&#259; aduci exemplul t&#259;u la ora urm&#259;toare! Vom analiza &#238;mpreun&#259; informa&#539;iile g&#259;site de voi &#351;i vom exersa g&#226;ndirea critic&#259; &#238;n echip&#259;.</p>
+  </div>
+
+  <div class="callout callout-green" style="margin-top:14px;">
+    <strong>&#127942; Felicit&#259;ri!</strong> Ai parcurs complet Tutorialul 1. Vocea ta este o superputere &#8212; nu o &#539;ine pe Mute!
+  </div>
+</div>
+
+</div>
+<!-- END TEMPLATES -->
+
+<script>
+var levels = [
+  { icon: "?",  title: "De ce copiii mici sunt ni&#351;te genii?", time: "5 minute",  tpl: "tpl-0", btnText: "Am activat curiozitatea &#8212; Trec la Level 2" },
+  { icon: "\u00a7", title: "Dreptul t\u0103u, legea ta!", time: "10 minute", tpl: "tpl-1", btnText: "Am descoperit dreptul meu &#8212; Trec la Level 3" },
+  { icon: "&#128269;", title: "Misiunea ta de detectiv", time: "15 minute", tpl: "tpl-2", btnText: "Am intrat \u00een rolul de detectiv &#8212; Trec la Level 4" },
+  { icon: "\u21d5", title: "\u00centreb\u0103ri deschise vs. \u00eenchise", time: "10 minute", tpl: "tpl-3", btnText: "\u00centreb mai bine &#8212; Trec la Level 5" },
+  { icon: "\u2605", title: "Antrenamentul Ninja &#8212; Explozia Stelar\u0103", time: "7 minute", tpl: "tpl-4", btnText: "Mi-am construit steaua &#8212; Trec la Challenge-ul final" },
+  { icon: "\u25ce", title: "Challenge-ul final: Mythbuster", time: "3 minute", tpl: "tpl-5", btnText: "Misiune \u00eendeplinit\u0103 \u2714" }
+];
+
+var current = 0;
+var total = levels.length;
+var score = 0;
+var quizAnswered = {};
+var sortDone = false;
+
+var sortQuestions = [
+  { text: "S-a sunat?", correct: "closed" },
+  { text: "Mai e mult?", correct: "closed" },
+  { text: "Ai inv\u0103\u021bat?", correct: "closed" },
+  { text: "S-a terminat ora?", correct: "closed" },
+  { text: "Cum putem afla mai multe despre aceast\u0103 regul\u0103?", correct: "open" },
+  { text: "De ce este important s\u0103 verific\u0103m informa\u021bia?", correct: "open" },
+  { text: "Ce anume ai \u00een\u021beles din aceast\u0103 lec\u021bie?", correct: "open" },
+  { text: "Cum te-a f\u0103cut s\u0103 te sim\u021bi aceast\u0103 situa\u021bie?", correct: "open" }
+];
+var sortState = {};
+
+function renderNav() {
+  var nav = document.getElementById('levelsNav');
+  var html = '';
+  for (var i = 0; i < levels.length; i++) {
+    var cls = 'level-dot';
+    if (i === current) cls += ' active';
+    else if (i < current) cls += ' done';
+    html += '<div class="' + cls + '" data-idx="' + i + '">' + (i + 1) + '</div>';
+  }
+  nav.innerHTML = html;
+  var dots = nav.querySelectorAll('.level-dot');
+  for (var j = 0; j < dots.length; j++) {
+    dots[j].addEventListener('click', function() {
+      current = parseInt(this.getAttribute('data-idx'));
+      renderContent();
+    });
+  }
+}
+
+function renderContent() {
+  var lvl = levels[current];
+  var tplEl = document.getElementById(lvl.tpl);
+  var bodyHTML = tplEl ? tplEl.innerHTML : '';
+  document.getElementById('levelContent').innerHTML =
+    '<div class="level-card">' +
+      '<div class="level-header">' +
+        '<div class="level-icon">' + lvl.icon + '</div>' +
+        '<div>' +
+          '<div class="level-title">Level ' + (current + 1) + ': ' + lvl.title + '</div>' +
+          '<div class="level-time">' + lvl.time + '</div>' +
+        '</div>' +
+      '</div>' +
+      bodyHTML +
+    '</div>';
+
+  var pct = Math.round((current / total) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = current + ' din ' + total + ' leveluri completate';
+  document.getElementById('prevBtn').disabled = (current === 0);
+  document.getElementById('nextBtn').disabled = false;
+  document.getElementById('nextBtn').innerHTML = (current === total - 1) ? 'Misiune \u00eendeplinit\u0103 \u2714' : lvl.btnText;
+
+  if (current === 0) initPoll(1);
+  if (current === 2) initPoll(3);
+  if (current === 1) initQuiz();
+  if (current === 3) initSort();
+
+  renderNav();
+}
+
+function initPoll(pollId) {
+  var btns = document.querySelectorAll('[data-poll="' + pollId + '"]');
+  btns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var val = this.getAttribute('data-val');
+      btns.forEach(function(b) { b.classList.remove('selected'); });
+      this.classList.add('selected');
+      var fbs = document.querySelectorAll('[id^="poll' + pollId + '-fb-"]');
+      fbs.forEach(function(fb) { fb.style.display = 'none'; });
+      var fb = document.getElementById('poll' + pollId + '-fb-' + val);
+      if (fb) fb.style.display = 'block';
+      score += 5;
+      document.getElementById('scoreDisplay').textContent = score;
+    });
+  });
+}
+
+function initQuiz() {
+  var btns = document.querySelectorAll('.quiz-btn');
+  var correctAnswers = { q1: 'true', q2: 'false', q3: 'true', q4: 'true' };
+  btns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var q = this.getAttribute('data-q');
+      if (quizAnswered[q]) return;
+      quizAnswered[q] = true;
+      var answer = this.getAttribute('data-answer');
+      var correct = correctAnswers[q];
+      var allBtns = document.querySelectorAll('[data-q="' + q + '"]');
+      allBtns.forEach(function(b) { b.disabled = true; });
+      var fb = document.getElementById('fb-' + q);
+      if (answer === correct) {
+        this.classList.add('correct');
+        fb.textContent = '\u2714 Corect! Bravo!';
+        fb.className = 'quiz-feedback ok';
+        score += 10;
+        document.getElementById('scoreDisplay').textContent = score;
+      } else {
+        this.classList.add('wrong');
+        var correctBtn = document.querySelector('[data-q="' + q + '"][data-answer="' + correct + '"]');
+        if (correctBtn) correctBtn.classList.add('correct');
+        fb.textContent = '\u2718 Mai \u00eencerc\u0103! R\u0103spunsul corect este eviden\u021biat.';
+        fb.className = 'quiz-feedback nok';
+      }
+      var answered = Object.keys(quizAnswered).length;
+      if (answered === 4) {
+        var finalFb = document.getElementById('quiz-final-fb');
+        finalFb.style.display = 'block';
+        finalFb.textContent = '\u127881 Bravo! Drepturile nu sunt doar cuvinte, ci instrumente reale care te ajut\u0103 s\u0103 \u00een\u021belegi \u015fi s\u0103 ac\u021bionezi!';
+      }
+    });
+  });
+}
+
+function initSort() {
+  if (sortDone) return;
+  var bank = document.getElementById('sortBank');
+  var closedZone = document.getElementById('closedZone');
+  var openZone = document.getElementById('openZone');
+  if (!bank) return;
+
+  sortQuestions.forEach(function(q, idx) {
+    var el = document.createElement('div');
+    el.className = 'sort-item';
+    el.textContent = q.text;
+    el.setAttribute('data-idx', idx);
+    el.setAttribute('data-placed', 'bank');
+    el.addEventListener('click', function() {
+      var placed = this.getAttribute('data-placed');
+      var idx2 = this.getAttribute('data-idx');
+      var correct = sortQuestions[idx2].correct;
+      if (placed === 'bank') {
+        if (correct === 'closed') {
+          this.classList.add('placed-closed');
+          closedZone.appendChild(this);
+          this.setAttribute('data-placed', 'closed');
+        } else {
+          this.classList.add('placed-open');
+          openZone.appendChild(this);
+          this.setAttribute('data-placed', 'open');
+        }
+      } else {
+        this.classList.remove('placed-closed', 'placed-open');
+        bank.appendChild(this);
+        this.setAttribute('data-placed', 'bank');
+      }
+    });
+    bank.appendChild(el);
+  });
+
+  var checkBtn = document.getElementById('checkSort');
+  if (checkBtn) {
+    checkBtn.addEventListener('click', function() {
+      var allItems = document.querySelectorAll('.sort-item');
+      var correct = 0; var total2 = sortQuestions.length;
+      allItems.forEach(function(item) {
+        var idx2 = item.getAttribute('data-idx');
+        var placed = item.getAttribute('data-placed');
+        var shouldBe = sortQuestions[idx2].correct;
+        if (placed === shouldBe) correct++;
+      });
+      var fb = document.getElementById('sortFeedback');
+      fb.style.display = 'block';
+      if (correct === total2) {
+        fb.className = 'feedback-box feedback-correct';
+        fb.textContent = '\u127881 Perfect! Ai sortat corect toate \u00eentreb\u0103rile! +20 puncte';
+        score += 20;
+        document.getElementById('scoreDisplay').textContent = score;
+        sortDone = true;
+      } else {
+        fb.className = 'feedback-box feedback-wrong';
+        fb.textContent = correct + ' din ' + total2 + ' corecte. Mai \u00eencearc\u0103! D\u0103 click pe o \u00eentrebare pentru a o muta \u00eenapoi.';
+      }
+    });
+  }
+}
+
+function showTip(tip) {
+  var ids = ['ce','cine','cand','unde','dece'];
+  ids.forEach(function(id) {
+    var el = document.getElementById('popup-' + id);
+    if (el) el.style.display = (id === tip && el.style.display !== 'block') ? 'block' : 'none';
+  });
+}
+
+function navigate(dir) {
+  if (dir === 1 && current === total - 1) {
+    document.getElementById('nextBtn').innerHTML = 'Completat! \u2713';
+    document.getElementById('nextBtn').disabled = true;
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressLabel').textContent = '6 din 6 leveluri completate';
+    renderNav();
+    return;
+  }
+  var next = current + dir;
+  if (next >= 0 && next < total) { current = next; renderContent(); }
+}
+
+document.getElementById('prevBtn').addEventListener('click', function() { navigate(-1); });
+document.getElementById('nextBtn').addEventListener('click', function() { navigate(1); });
+
+renderContent();
+</script>
+</body>
+</html>
