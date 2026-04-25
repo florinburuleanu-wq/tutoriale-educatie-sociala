@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial 10 - Fabrica de Legi</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(187, 247, 208, 0.45), transparent 40%),
+        radial-gradient(circle at bottom right, rgba(22, 163, 74, 0.22), transparent 36%),
+        #ecfdf5;
+      padding: 1.5rem;
+      color: #052e16;
+    }
+    .container { max-width: 700px; margin: 0 auto; }
+    .hero {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 45%, #22c55e 100%);
+      padding: 2rem 1.5rem 1.5rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 42px rgba(5, 46, 22, 0.35);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -45px;
+      right: -40px;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.16);
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -30px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(167, 243, 208,0.55) 0%, rgba(167,243,208,0.04) 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      color: #ecfdf5;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero h1 {
+      color: #f0fdf4;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero p {
+      color: #dcfce7;
+      font-size: 13px;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta span {
+      color: #bbf7d0;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .progress-bar-outer {
+      background: rgba(255,255,255,0.20);
+      border-radius: 10px;
+      height: 7px;
+      margin-top: 14px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #22c55e 0%, #84cc16 100%);
+      width: 0;
+      transition: width 0.6s ease;
+    }
+    .progress-label {
+      color: #dcfce7;
+      font-size: 11px;
+      margin-top: 5px;
+      position: relative;
+      z-index: 1;
+    }
+    .score-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, #ecfdf5 0%, #f0fdf4 70%, #dcfce7 100%);
+      border: 1px solid #bbf7d0;
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 1rem;
+      font-size: 13px;
+      color: #166534;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(22, 163, 74, 0.18);
+    }
+    .levels-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 1.25rem;
+      scrollbar-width: none;
+    }
+    .levels-nav::-webkit-scrollbar { display: none; }
+    .level-dot {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid #bbf7d0;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #15803d;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(34, 197, 94, 0.20);
+    }
+    .level-dot.active {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      border-color: #15803d;
+      color: #f0fdf4;
+      transform: translateY(-1px);
+    }
+    .level-dot.done {
+      background: #84cc16;
+      border-color: #84cc16;
+      color: #052e16;
+    }
+    .level-card {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #d4d4d8;
+      border-radius: 18px;
+      padding: 1.3rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 18px 36px rgba(15, 118, 110, 0.18);
+      backdrop-filter: blur(4px);
+    }
+    .level-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .level-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 700;
+      color: #15803d;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .level-title { font-size: 15px; font-weight: 700; color: #022c22; }
+    .level-time { font-size: 12px; color: #4b5563; margin-top: 2px; }
+    .level-body { font-size: 14px; color: #374151; line-height: 1.75; }
+    .level-body strong { font-weight: 700; color: #022c22; }
+    .callout {
+      border-left: 4px solid #22c55e;
+      background: linear-gradient(180deg, #ecfdf3 0%, #f0fdf4 100%);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 14px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #166534;
+      line-height: 1.6;
+    }
+    .callout-amber {
+      border-left-color: #f97316;
+      background: linear-gradient(180deg, #fffbeb 0%, #fef9c3 100%);
+      color: #92400e;
+    }
+    .callout-red {
+      border-left-color: #ef4444;
+      background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+      color: #b91c1c;
+    }
+    .activity-box {
+      background: linear-gradient(180deg, #ecfdf3 0%, #e0f2fe 100%);
+      border: 1.5px solid #bbf7d0;
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
+      margin: 14px 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+    }
+    .activity-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #166534;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .activity-question {
+      font-size: 14px;
+      color: #022c22;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .poll-options { display: flex; flex-direction: column; gap: 8px; }
+    .poll-option,
+    .quiz-btn,
+    .pipeline-stage,
+    .matrix-cell {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1.5px solid #d4d4d8;
+      background: #ffffff;
+      font-size: 13px;
+      color: #022c22;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .poll-option:hover,
+    .quiz-btn:hover,
+    .pipeline-stage:hover,
+    .matrix-cell:hover {
+      border-color: #16a34a;
+      background: #dcfce7;
+      color: #166534;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(22, 163, 74, 0.24);
+    }
+    .poll-option.selected,
+    .pipeline-stage.selected,
+    .matrix-cell.selected {
+      border-color: #16a34a;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #ecfdf5;
+    }
+    .poll-option.selected-red { border-color: #ef4444; background: #ef4444; color: #fef2f2; }
+    .poll-option.selected-amber { border-color: #f97316; background: #f97316; color: #fffbeb; }
+    .feedback-box {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      display: none;
+    }
+    .feedback-correct { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
+    .feedback-wrong { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .feedback-neutral { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .quiz-item { margin-bottom: 16px; }
+    .quiz-statement { font-size: 14px; color: #022c22; font-weight: 700; margin-bottom: 8px; line-height: 1.5; }
+    .quiz-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .quiz-btn.correct { background: #22c55e; border-color: #22c55e; color: #ecfdf5; }
+    .quiz-btn.wrong { background: #ef4444; border-color: #ef4444; color: #fef2f2; }
+    .quiz-btn:disabled { cursor: default; opacity: 0.8; }
+    .quiz-feedback { font-size: 12px; margin-top: 5px; min-height: 16px; }
+    .quiz-feedback.ok { color: #166534; }
+    .quiz-feedback.nok { color: #b91c1c; }
+    .pipeline-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+    .pipeline-label { font-size: 12px; color: #4b5563; margin-bottom: 4px; }
+    .pipeline-stage.done { background: #ecfdf5; border-color: #bbf7d0; color: #166534; }
+    .matrix-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+    .matrix-desc { font-size: 12px; color: #4b5563; margin-bottom: 6px; }
+    .timeline-card {
+      background: linear-gradient(135deg, #ecfdf3 0%, #e0f2fe 100%);
+      border: 1.5px solid #bbf7d0;
+      border-radius: 16px;
+      padding: 1rem;
+      margin: 14px 0;
+      box-shadow: 0 10px 24px rgba(22, 163, 74, 0.16);
+    }
+    .timeline-step { font-size: 13px; color: #022c22; margin-bottom: 8px; line-height: 1.6; }
+    .timeline-step strong { color: #15803d; }
+    .nav-btns { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; gap: 10px; }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn:hover { opacity: 0.96; transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #ecfdf5;
+      box-shadow: 0 10px 18px rgba(22, 163, 74, 0.32);
+    }
+    .btn-outline {
+      background: rgba(255,255,255,0.95);
+      color: #166534;
+      border: 1px solid #d4d4d8;
+    }
+    .btn-outline:hover { background: #f9fafb; }
+    .btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+    @media (max-width: 640px) {
+      body { padding: 1rem; }
+      .quiz-btns, .pipeline-grid, .matrix-grid { grid-template-columns: 1fr; }
+      .nav-btns { flex-direction: column; }
+      .nav-btns .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-badge">Tutorialul 10</div>
+      <h1>🚀 Fabrica de Legi: Cum devine o simplă idee o regulă pentru toți?</h1>
+      <p>Modulul: <em>Raportul cetățeni – autorități – Lecția 1. Domnia legii: Procesul de elaborare a legilor</em>. Fix timpul de care ai nevoie pentru a afla cum poți să-ți scrii propriile reguli la nivel național!</p>
+      <div class="hero-meta">
+        <span>⏱ 50 de minute</span>
+        <span>⭐ 6 leveluri</span>
+        <span>🌿 temă vizuală verde</span>
+      </div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+      <div class="progress-label" id="progressLabel">0 din 6 leveluri completate</div>
+    </div>
+
+    <div class="score-bar">🏆 Puncte din activități: <span id="scoreDisplay">0</span>/100</div>
+    <div class="levels-nav" id="levelsNav"></div>
+    <div id="levelContent"></div>
+
+    <div class="nav-btns">
+      <button class="btn btn-outline" id="prevBtn" disabled>&larr; Înapoi</button>
+      <button class="btn btn-primary" id="nextBtn">Înainte &rarr;</button>
+    </div>
+  </div>
+
+  <div id="all-templates" style="display:none;">
+    <div id="tpl-0">
+      <p class="level-body">Salutare, viitor lider, și bun venit la <strong>Nivelul 2</strong> al aventurii noastre! Ai terminat cu succes primul mare modul, unde ai construit fundația statului. Acum trecem la lucruri și mai practice: relația dintre <strong>TINE</strong> (cetățeanul) și <strong>EI</strong> (autoritățile).</p>
+      <p class="level-body" style="margin-top:10px;">S-ar putea să crezi că legile sunt făcute doar de politicieni serioși, la televizor, și că tu trebuie doar să le asculți. <strong>Fals!</strong> Într-o democrație adevărată, există <strong>domnia legii</strong>, iar astăzi vom vizita „fabrica de legi” pentru a vedea cum tu și cetățenii obișnuiți puteți fi arhitecții propriei voastre vieți! Ești pregătit?</p>
+      <div class="activity-box">
+        <div class="activity-title">🎯 Întrebare de pornire</div>
+        <div class="activity-question">Cum vezi tu legile, înainte să intri în „fabrica de legi”?</div>
+        <div class="poll-options" id="pollStart">
+          <button class="poll-option" data-poll="start" data-val="a">Ca pe niște reguli impuse de sus, la care nu am ce comenta.</button>
+          <button class="poll-option" data-poll="start" data-val="b">Ca pe niște reguli la care și cetățenii pot contribui, dacă știu cum.</button>
+          <button class="poll-option" data-poll="start" data-val="c">Nu m-am gândit niciodată serios la asta.</button>
+        </div>
+        <div class="feedback-box feedback-wrong" id="pollstart-fb-a">Așa pare uneori, dar vei descoperi că într-o democrație ai mai multă putere decât crezi.</div>
+        <div class="feedback-box feedback-correct" id="pollstart-fb-b">Exact! Astăzi vei vedea cum poți participa și tu, ca cetățean, la „rețeta” unei legi.</div>
+        <div class="feedback-box feedback-neutral" id="pollstart-fb-c">Perfect, acesta este momentul ideal să afli cum funcționează lucrurile în spatele ușilor închise.</div>
+      </div>
+    </div>
+
+    <div id="tpl-1">
+      <p class="level-body"><strong>📖 Rețeta secretă a legilor (Teoria pe scurt)</strong></p>
+      <p class="level-body" style="margin-top:8px;">Ce înseamnă <strong>domnia legii</strong>? Înseamnă că atât tu, cât și președintele sau primarul vă supuneți acelorași reguli, fără privilegii. Legile ne spun clar ce ne este permis și ce ne este interzis, pentru a trăi în siguranță.</p>
+      <p class="level-body" style="margin-top:8px;">Dar cum apare o lege? Nu se naște peste noapte! Procesul ei de elaborare este ca <strong>rețeta unui tort foarte complex</strong>, care trece prin mai multe etape obligatorii:</p>
+      <div class="callout">
+        <p class="level-body"><strong>📝 1. Inițiativa legislativă (Rețeta propusă)</strong>: Este momentul în care cineva propune un proiect de lege. Cine are acest drept? Guvernul, deputații, senatorii și... surpriză: <strong>cetățenii cu drept de vot</strong>! Da, dacă se strâng cel puțin <strong>100.000 de semnături</strong>, oamenii obișnuiți pot propune ei înșiși o lege nouă!</p>
+      </div>
+      <div class="callout">
+        <p class="level-body"><strong>🗣️ 2. Dezbaterea și Adoptarea (Coacerea)</strong>: Proiectul ajunge în Parlament (în Camera Deputaților și în Senat), unde este discutat, modificat și votat.</p>
+      </div>
+      <div class="callout">
+        <p class="level-body"><strong>✒️ 3. Promulgarea (Semnătura Maestrului)</strong>: După ce a fost votată, legea ajunge pe biroul Președintelui României, care trebuie să o promulge (adică să o semneze oficial).</p>
+      </div>
+      <div class="callout">
+        <p class="level-body"><strong>📰 4. Publicarea (Servirea)</strong>: Pentru a intra în vigoare și a fi obligatorie, legea trebuie tipărită în <strong>Monitorul Oficial al României</strong>. Până nu apare acolo, ea nu există legal!</p>
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">🧱 Mini-joc: „Banda de producție a legii”</div>
+        <div class="activity-question">Dă click pe fiecare etapă, în ordinea corectă, pentru a porni „linia de producție” a unei legi.</div>
+        <div class="pipeline-grid" id="pipelineGrid"></div>
+        <div class="feedback-box" id="pipelineFeedback"></div>
+      </div>
+    </div>
+
+    <div id="tpl-2">
+      <p class="level-body"><strong>🕵️ Cazul clasei a VII-a și „Legea Telefoanelor” (Studiu de caz)</strong></p>
+      <p class="level-body" style="margin-top:8px;">Consiliul Profesorilor a propus un regulament nou: <em>„Telefoanele mobile sunt interzise complet în școală, chiar și în ghiozdan, fiind confiscate la poartă!”</em>. Mara, o elevă din clasa a VII-a, consideră că regula este prea dură și că elevii au nevoie de telefoane pentru drumul spre casă.</p>
+      <p class="level-body" style="margin-top:8px;">Ea nu doar că se plânge pe holuri, ci ia o foaie, scrie un alt proiect: <em>„Telefoanele stau închise în ghiozdan în timpul orelor, dar pot fi folosite strict în zona de recreere în pauza mare”</em>. Mara merge prin școală și strânge semnături de la peste 200 de elevi pentru a obliga Consiliul să dezbată și să voteze proiectul ei.</p>
+      <div class="activity-box">
+        <div class="activity-title">🧠 Quiz rapid – Level 3</div>
+        <div class="quiz-item">
+          <div class="quiz-statement">1. Ce etapă a procesului de creare a legilor a folosit Mara atunci când a strâns semnăturile?</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q1" data-answer="a">Promulgarea</button>
+            <button class="quiz-btn" data-q="q1" data-answer="b">Inițiativa legislativă</button>
+            <button class="quiz-btn" data-q="q1" data-answer="c">Dezbaterea și adoptarea</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q1"></div>
+        </div>
+        <div class="quiz-item">
+          <div class="quiz-statement">2. Cine are dreptul, în viața reală, să inițieze legi prin strângerea a cel puțin 100.000 de semnături?</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q2" data-answer="a">Președintele</button>
+            <button class="quiz-btn" data-q="q2" data-answer="b">Guvernul, parlamentarii și cetățenii cu drept de vot</button>
+            <button class="quiz-btn" data-q="q2" data-answer="c">Primarii marilor orașe și rectorii universităților</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q2"></div>
+        </div>
+        <div class="quiz-item">
+          <div class="quiz-statement">3. De ce este important ca oamenii obișnuiți să aibă drept de inițiativă legislativă?</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q3" data-answer="a">Pentru că legile făcute doar de sus pot fi uneori nedrepte.</button>
+            <button class="quiz-btn" data-q="q3" data-answer="b">Pentru ca politicienii să nu mai fie nevoiți să muncească.</button>
+            <button class="quiz-btn" data-q="q3" data-answer="c">Nu este important, e doar un gest simbolic.</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q3"></div>
+        </div>
+        <div class="quiz-item">
+          <div class="quiz-statement">4. Ce a făcut Mara diferit față de elevii care doar se plâng pe holuri?</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q4" data-answer="a">A ignorat regulamentul și atât.</button>
+            <button class="quiz-btn" data-q="q4" data-answer="b">A propus o soluție clară și a strâns semnături pentru ea.</button>
+            <button class="quiz-btn" data-q="q4" data-answer="c">A plecat din școală în semn de protest.</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q4"></div>
+        </div>
+        <div class="feedback-box feedback-correct" id="quiz-final-fb" style="margin-top:10px"></div>
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">🤔 Reflecție – Gândește liber</div>
+        <div class="activity-question">Ce etapă a procesului de creare a legilor a folosit Mara atunci când a strâns semnăturile?</div>
+        <p class="level-body">Indiciu: Primul pas, cel în care propui o idee nouă, se numește <strong>I... legislativă</strong>.</p>
+        <div class="activity-question" style="margin-top:10px;">De ce crezi că este important ca oamenii obișnuiți să aibă acest drept, în loc să lase doar șefii să decidă?</div>
+        <p class="level-body">Indiciu: Pentru că uneori legile făcute de sus în jos pot fi nedrepte, iar implicarea cetățenilor asigură că nevoile reale ale poporului sunt ascultate.</p>
+      </div>
+    </div>
+
+    <div id="tpl-3">
+      <p class="level-body"><strong>💡 Știai că...? (Informații care sparg tipare)</strong></p>
+      <p class="level-body" style="margin-top:8px;">Deși Constituția îți dă superputerea de a propune legi (dacă strângi acele <strong>100.000 de semnături</strong>), nu ai voie să propui chiar orice! Există excepții stricte. Cetățenii nu pot avea inițiativă legislativă în probleme care țin de <strong>taxe și impozite</strong>, de <strong>tratamente internaționale</strong> sau de <strong>grațierea unor infractori</strong>.</p>
+      <p class="level-body" style="margin-top:8px;">De asemenea, romanii antici aveau o vorbă celebră: <em>„Dura lex, sed lex”</em> (Legea e aspră, dar este lege). Într-un stat de drept, chiar dacă o lege nu ne convine personal, atâta timp cât ea a fost adoptată democratic și respectă drepturile omului, trebuie să ne supunem ei!</p>
+      <div class="timeline-card">
+        <div class="timeline-step"><strong>Superputerea cetățenilor:</strong> Inițiativa legislativă le permite să propună legi, dacă strâng suficiente semnături.</div>
+        <div class="timeline-step"><strong>Limitele puterii:</strong> Nu toate domeniile pot fi schimbate prin inițiativă cetățenească (de exemplu, taxele și impozitele).</div>
+        <div class="timeline-step"><strong>„Dura lex, sed lex”:</strong> Chiar și când o lege nu ne place, dacă este adoptată corect și respectă drepturile omului, ea trebuie respectată.</div>
+      </div>
+    </div>
+
+    <div id="tpl-4">
+      <p class="level-body"><strong>🎮 Cum te joci în viața reală?</strong></p>
+      <p class="level-body" style="margin-top:8px;">A face parte dintr-o societate înseamnă a fi activ, nu doar a privi de pe margine!</p>
+      <div class="callout callout-red">
+        <strong>❌ ESTE INTERZIS / GAME OVER:</strong> Să crezi că „vocea ta nu contează” și să te limitezi la a te plânge continuu de regulile din școală, din oraș sau din țară, fără să faci absolut nimic pentru a le schimba. Pasivitatea este cel mai mare inamic al libertății!
+      </div>
+      <div class="callout">
+        <strong>✅ LEVEL UP / Atitudinea de lider:</strong> Să fii un cetățean cu inițiativă! Liderul știe că legile pot fi îmbunătățite. El se informează, discută cu alții, semnează petiții și propune soluții clare în comunitatea lui. Când știi procesul, poți schimba sistemul din interior!
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">🆕 Activitate: Matrixul „Plâns vs. Inițiativă”</div>
+        <div class="activity-question">Bifează pentru fiecare situație dacă este vorba de PLÂNS PASIV sau de INIȚIATIVĂ ACTIVĂ.</div>
+        <div class="matrix-grid" id="matrixGrid"></div>
+        <div class="feedback-box" id="matrixFeedback"></div>
+      </div>
+    </div>
+
+    <div id="tpl-5">
+      <p class="level-body"><strong>📝 Misiunea ta practică</strong></p>
+      <p class="level-body" style="margin-top:8px;">Astăzi ești un cetățean inițiator! Deschide caietul și redactează propria ta <strong>Inițiativă Legislativă</strong> (pentru orașul tău sau pentru școala ta). Scrie-o sub forma următoare:</p>
+      <ul class="level-body" style="padding-left:1.1rem; margin-top:4px;">
+        <li style="margin-bottom:4px;"><strong>Titlul legii:</strong> (Ex: Legea zonelor verzi din curtea școlii)</li>
+        <li style="margin-bottom:4px;"><strong>Ce propune legea (scurt):</strong> (Ex: Fiecare clasă va planta și va îngriji un copac în curtea școlii pe parcursul anului)</li>
+        <li><strong>Cui îi aduce un beneficiu:</strong> (Ex: Elevilor, pentru un aer mai curat, și naturii).</li>
+      </ul>
+      <p class="level-body" style="margin-top:8px;">Adaugă această fișă în portofoliul tău! Cine știe, poate o vei prezenta chiar directorului sau primarului!</p>
+      <div class="activity-box">
+        <div class="activity-title">🎯 Micro-quiz final</div>
+        <div class="activity-question">După acest tutorial, care este cea mai bună atitudine?</div>
+        <div class="poll-options" id="pollFinal">
+          <button class="poll-option" data-poll="final" data-val="a">Să mă plâng în continuare de reguli, fără să propun soluții.</button>
+          <button class="poll-option" data-poll="final" data-val="b">Să înțeleg procesul de elaborare a legilor și să caut modalități de implicare.</button>
+          <button class="poll-option" data-poll="final" data-val="c">Să ignor complet regulile, pentru că „oricum nu mă ascultă nimeni”.</button>
+        </div>
+        <div class="feedback-box feedback-wrong" id="pollfinal-fb-a">Plânsul fără acțiune nu schimbă nimic. Ai văzut deja cum Mara a făcut un pas în plus.</div>
+        <div class="feedback-box feedback-correct" id="pollfinal-fb-b">Exact! Când cunoști „rețeta” legilor, poți deveni parte din ea – ca inițiator, susținător sau cetățean informat.</div>
+        <div class="feedback-box feedback-wrong" id="pollfinal-fb-c">Ignorarea regulilor nu este o soluție. Schimbarea lor începe cu înțelegere și implicare.</div>
+      </div>
+      <div class="callout" style="margin-top:10px;">
+        Superb! Ai învățat cum se naște o lege și ai descoperit că ai puterea să participi la elaborarea ei.<br>
+        <strong>Gândește liber, Vorbește pentru toți, Schimbă lumea! 🌍</strong>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const levels = [
+      { icon: '🏗️', title: 'Intrarea în fabrica de legi', time: '7 minute', points: 10, tpl: 'tpl-0', btnText: 'Am intrat în fabrică — Trec la Level 2' },
+      { icon: '📖', title: 'Rețeta secretă a legilor', time: '10 minute', points: 20, tpl: 'tpl-1', btnText: 'Am înțeles rețeta — Trec la Level 3' },
+      { icon: '🕵️', title: 'Cazul „Legii Telefoanelor”', time: '12 minute', points: 30, tpl: 'tpl-2', btnText: 'Am analizat cazul — Trec la Level 4' },
+      { icon: '💡', title: 'Limitele superputerii tale', time: '8 minute', points: 0, tpl: 'tpl-3', btnText: 'Am clarificat limitele — Trec la Level 5' },
+      { icon: '🎮', title: 'Reacție pasivă vs. inițiativă', time: '8 minute', points: 20, tpl: 'tpl-4', btnText: 'Am ales inițiativa — Trec la Level 6' },
+      { icon: '🏁', title: 'Inițiativa ta legislativă', time: '5 minute', points: 20, tpl: 'tpl-5', btnText: 'Misiune îndeplinită ✔' }
+    ];
+
+    let current = 0;
+    const total = levels.length;
+    let score = 0;
+    const awarded = {};
+    const quizAnswered = {};
+    let pipelineDone = false;
+    let matrixDone = false;
+
+    const pipelineStages = [
+      { id: 'p1', label: 'Inițiativa legislativă', order: 1 },
+      { id: 'p2', label: 'Dezbaterea și adoptarea', order: 2 },
+      { id: 'p3', label: 'Promulgarea', order: 3 },
+      { id: 'p4', label: 'Publicarea în Monitorul Oficial', order: 4 }
+    ];
+
+    const matrixItems = [
+      {
+        id: 'm1',
+        text: 'Scrii pe un grup că „regulile sunt absurde”, dar nu discuți cu nimeni și nu propui nimic concret.',
+        correct: 'plans'
+      },
+      {
+        id: 'm2',
+        text: 'Formulezi o propunere clară pentru regulamentul școlii și o prezinți profesorului diriginte.',
+        correct: 'initiativa'
+      },
+      {
+        id: 'm3',
+        text: 'Semnezi o petiție prin care ceri mai multe spații verzi în cartier.',
+        correct: 'initiativa'
+      },
+      {
+        id: 'm4',
+        text: 'Te plângi în fiecare zi de traficul din oraș, dar nu participi la nicio discuție publică.',
+        correct: 'plans'
+      }
+    ];
+
+    function addPoints(key, amount) {
+      if (awarded[key]) return;
+      awarded[key] = true;
+      score += amount;
+      if (score > 100) score = 100;
+      document.getElementById('scoreDisplay').textContent = score;
+    }
+
+    function renderNav() {
+      const nav = document.getElementById('levelsNav');
+      let html = '';
+      for (let i = 0; i < levels.length; i++) {
+        let cls = 'level-dot';
+        if (i === current) cls += ' active';
+        else if (i < current) cls += ' done';
+        html += '<div class="' + cls + '" data-idx="' + i + '">' + (i + 1) + '</div>';
+      }
+      nav.innerHTML = html;
+      nav.querySelectorAll('.level-dot').forEach(dot => {
+        dot.addEventListener('click', function() {
+          current = parseInt(this.getAttribute('data-idx'), 10);
+          renderContent();
+        });
+      });
+    }
+
+    function renderContent() {
+      const lvl = levels[current];
+      const tplEl = document.getElementById(lvl.tpl);
+      const bodyHTML = tplEl ? tplEl.innerHTML : '';
+      document.getElementById('levelContent').innerHTML = `
+        <div class="level-card">
+          <div class="level-header">
+            <div class="level-icon">${lvl.icon}</div>
+            <div>
+              <div class="level-title">Level ${current + 1}: ${lvl.title}</div>
+              <div class="level-time">Timp estimat: ${lvl.time}</div>
+            </div>
+          </div>
+          <div>${bodyHTML}</div>
+        </div>
+      `;
+
+      const pct = Math.round((current / total) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = current + ' din ' + total + ' leveluri completate';
+      document.getElementById('prevBtn').disabled = current === 0;
+      document.getElementById('nextBtn').disabled = false;
+      document.getElementById('nextBtn').innerHTML = current === total - 1 ? 'Misiune îndeplinită ✔' : lvl.btnText;
+
+      renderNav();
+      if (current === 0) initPoll('start', 10);
+      if (current === 1) initPipeline();
+      if (current === 2) initQuiz();
+      if (current === 4) initMatrix();
+      if (current === 5) initPoll('final', 20);
+    }
+
+    function initPoll(pollId, points) {
+      const selector = '[data-poll="' + pollId + '"]';
+      const btns = document.querySelectorAll(selector);
+      btns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const val = this.getAttribute('data-val');
+          btns.forEach(b => b.classList.remove('selected', 'selected-red', 'selected-amber'));
+          if (val === 'b') this.classList.add('selected');
+          else if (val === 'a') this.classList.add('selected-amber');
+          else this.classList.add('selected-red');
+          document.querySelectorAll('[id^="poll' + pollId + '-fb-"]').forEach(fb => fb.style.display = 'none');
+          const fb = document.getElementById('poll' + pollId + '-fb-' + val);
+          if (fb) fb.style.display = 'block';
+          addPoints('poll-' + pollId, points);
+        });
+      });
+    }
+
+    function initPipeline() {
+      if (pipelineDone) return;
+      const grid = document.getElementById('pipelineGrid');
+      if (!grid) return;
+      grid.innerHTML = pipelineStages
+        .slice()
+        .sort(() => Math.random() - 0.5)
+        .map((stage) => `
+          <div class="pipeline-stage" data-id="${stage.id}" data-order="${stage.order}">
+            <div class="pipeline-label">Etapă</div>
+            <div>${stage.label}</div>
+          </div>
+        `).join('');
+
+      const stagesEls = document.querySelectorAll('.pipeline-stage');
+      stagesEls.forEach(el => {
+        el.addEventListener('click', function() {
+          this.classList.toggle('selected');
+        });
+      });
+
+      const fb = document.getElementById('pipelineFeedback');
+      grid.insertAdjacentHTML('afterend', '<button class="btn btn-primary" id="checkPipeline" style="margin-top:10px;font-size:13px;padding:8px 16px;">Verifică ordinea</button>');
+      const checkBtn = document.getElementById('checkPipeline');
+      checkBtn.addEventListener('click', function() {
+        const selected = Array.from(document.querySelectorAll('.pipeline-stage.selected'));
+        if (selected.length !== pipelineStages.length) {
+          fb.style.display = 'block';
+          fb.className = 'feedback-box feedback-neutral';
+          fb.textContent = 'Selectează toate cele patru etape, în ordinea corectă, apoi verifică din nou.';
+          return;
+        }
+        const orders = selected.map(el => parseInt(el.getAttribute('data-order'), 10));
+        const sorted = [...orders].sort((a,b) => a-b);
+        const isCorrect = orders.every((v,i) => v === sorted[i]);
+        fb.style.display = 'block';
+        if (isCorrect) {
+          fb.className = 'feedback-box feedback-correct';
+          fb.textContent = '🏆 Super! Ai pus corect etapele: inițiativă, dezbatere și adoptare, promulgare, publicare. +20 puncte';
+          stagesEls.forEach(el => el.classList.add('done'));
+          addPoints('pipeline-all', 20);
+          pipelineDone = true;
+        } else {
+          fb.className = 'feedback-box feedback-wrong';
+          fb.textContent = 'Încă nu e ordinea corectă. Gândește-te din nou la „rețeta” unei legi.';
+        }
+      });
+    }
+
+    function initQuiz() {
+      const correctAnswers = { q1: 'b', q2: 'b', q3: 'a', q4: 'b' };
+      document.querySelectorAll('.quiz-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const q = this.getAttribute('data-q');
+          if (quizAnswered[q]) return;
+          quizAnswered[q] = true;
+          const answer = this.getAttribute('data-answer');
+          const correct = correctAnswers[q];
+          document.querySelectorAll('[data-q="' + q + '"]').forEach(b => b.disabled = true);
+          const fb = document.getElementById('fb-' + q);
+          if (answer === correct) {
+            this.classList.add('correct');
+            fb.textContent = '✔ Corect!';
+            fb.className = 'quiz-feedback ok';
+            addPoints('quiz-' + q, 5);
+          } else {
+            this.classList.add('wrong');
+            const correctBtn = document.querySelector('[data-q="' + q + '"][data-answer="' + correct + '"]');
+            if (correctBtn) correctBtn.classList.add('correct');
+            fb.textContent = '✘ Răspunsul corect este evidențiat mai sus.';
+            fb.className = 'quiz-feedback nok';
+          }
+          if (Object.keys(quizAnswered).length === 4) {
+            const finalFb = document.getElementById('quiz-final-fb');
+            finalFb.style.display = 'block';
+            finalFb.textContent = '🎉 Bravo! Ai înțeles ce a făcut Mara și cum funcționează inițiativa legislativă.';
+            addPoints('quiz-all', 10);
+          }
+        });
+      });
+    }
+
+    function initMatrix() {
+      if (matrixDone) return;
+      const grid = document.getElementById('matrixGrid');
+      if (!grid) return;
+      grid.innerHTML = matrixItems.map(item => `
+        <div class="matrix-cell" data-id="${item.id}">
+          <div class="matrix-desc">${item.text}</div>
+          <div>
+            <button class="matrix-cell" data-choice="plans" data-id="${item.id}">Reacție pasivă</button>
+            <button class="matrix-cell" data-choice="initiativa" data-id="${item.id}">Inițiativă activă</button>
+          </div>
+        </div>
+      `).join('');
+
+      const fb = document.getElementById('matrixFeedback');
+
+      document.querySelectorAll('.matrix-cell[data-choice]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          const choice = this.getAttribute('data-choice');
+          document.querySelectorAll('.matrix-cell[data-choice][data-id="' + id + '"]').forEach(b => b.classList.remove('selected'));
+          this.classList.add('selected');
+          const parent = this.closest('.matrix-cell[data-id]');
+          parent.setAttribute('data-choice', choice);
+        });
+      });
+
+      grid.insertAdjacentHTML('afterend', '<button class="btn btn-primary" id="checkMatrix" style="margin-top:10px;font-size:13px;padding:8px 16px;">Verifică alegerile</button>');
+      const checkBtn = document.getElementById('checkMatrix');
+      checkBtn.addEventListener('click', function() {
+        let correctCount = 0;
+        matrixItems.forEach(item => {
+          const parent = document.querySelector('.matrix-cell[data-id="' + item.id + '"]');
+          const choice = parent.getAttribute('data-choice');
+          if (choice === item.correct) correctCount++;
+        });
+        fb.style.display = 'block';
+        if (correctCount === matrixItems.length) {
+          fb.className = 'feedback-box feedback-correct';
+          fb.textContent = '🏆 Perfect! Ai făcut diferența dintre plâns pasiv și inițiativă activă. +20 puncte';
+          addPoints('matrix-all', 20);
+          matrixDone = true;
+        } else {
+          fb.className = 'feedback-box feedback-neutral';
+          fb.textContent = correctCount + ' din ' + matrixItems.length + ' situații încadrate corect. Poți ajusta răspunsurile și verifica din nou.';
+        }
+      });
+    }
+
+    function navigate(dir) {
+      if (dir === 1 && current === total - 1) {
+        document.getElementById('nextBtn').innerHTML = 'Completat! ✔';
+        document.getElementById('nextBtn').disabled = true;
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressLabel').textContent = total + ' din ' + total + ' leveluri completate';
+        renderNav();
+        return;
+      }
+      let next = current + dir;
+      if (next < 0) next = 0;
+      if (next >= total) next = current;
+      current = next;
+      renderContent();
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
+    document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
+
+    renderContent();
+  </script>
+</body>
+</html>
