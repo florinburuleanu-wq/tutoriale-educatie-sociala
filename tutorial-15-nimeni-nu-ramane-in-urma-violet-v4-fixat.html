@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial 15 - Nimeni nu rămâne în urmă</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(237, 233, 254, 0.85), transparent 40%),
+        radial-gradient(circle at bottom right, rgba(196, 181, 253, 0.55), transparent 36%),
+        #f5f3ff;
+      padding: 1.5rem;
+      color: #4c1d95;
+    }
+    .container { max-width: 700px; margin: 0 auto; }
+    .hero {
+      background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 40%, #7c3aed 80%, #6d28d9 100%);
+      padding: 2rem 1.5rem 1.5rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 42px rgba(109, 40, 217, 0.6);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -45px;
+      right: -40px;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -30px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(233, 213, 255,0.9) 0%, rgba(233,213,255,0.06) 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.24);
+      color: #f5f3ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero h1 {
+      color: #f5f3ff;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero p {
+      color: #e9d5ff;
+      font-size: 13px;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta span {
+      color: #e9d5ff;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .progress-bar-outer {
+      background: rgba(255,255,255,0.35);
+      border-radius: 10px;
+      height: 7px;
+      margin-top: 14px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #22c55e 0%, #0ea5e9 50%, #6366f1 100%);
+      width: 0;
+      transition: width 0.6s ease;
+    }
+    .progress-label {
+      color: #e9d5ff;
+      font-size: 11px;
+      margin-top: 5px;
+      position: relative;
+      z-index: 1;
+    }
+    .score-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
+      border: 1px solid #c4b5fd;
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 1rem;
+      font-size: 13px;
+      color: #4c1d95;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(129, 140, 248, 0.35);
+    }
+    .levels-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 1.25rem;
+      scrollbar-width: none;
+    }
+    .levels-nav::-webkit-scrollbar { display: none; }
+    .level-dot {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid #ddd6fe;
+      background: #f5f3ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #4c1d95;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(129, 140, 248, 0.32);
+    }
+    .level-dot.active {
+      background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%);
+      border-color: #6d28d9;
+      color: #f5f3ff;
+      transform: translateY(-1px);
+    }
+    .level-dot.done {
+      background: #22c55e;
+      border-color: #22c55e;
+      color: #022c22;
+    }
+    .level-card {
+      background: rgba(255,255,255,0.98);
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 1.3rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 18px 36px rgba(129, 140, 248, 0.25);
+      backdrop-filter: blur(4px);
+    }
+    .level-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .level-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #7c3aed;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .level-title { font-size: 15px; font-weight: 700; color: #111827; }
+    .level-time { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .level-body { font-size: 14px; color: #374151; line-height: 1.75; }
+    .level-body strong { font-weight: 700; color: #111827; }
+    .callout {
+      border-left: 4px solid #8b5cf6;
+      background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 14px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #4c1d95;
+      line-height: 1.6;
+    }
+    .callout-green {
+      border-left-color: #22c55e;
+      background: linear-gradient(180deg, #ecfdf5 0%, #dcfce7 100%);
+      color: #166534;
+    }
+    .activity-box {
+      background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 40%, #e0f2fe 100%);
+      border: 1.5px solid #ddd6fe;
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
+      margin: 14px 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+    }
+    .activity-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #7c3aed;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .activity-question {
+      font-size: 14px;
+      color: #111827;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .pill {
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(129, 140, 248, 0.12);
+      color: #4338ca;
+      border: 1px dashed rgba(129, 140, 248, 0.65);
+    }
+    .poll-options { display: flex; flex-direction: column; gap: 8px; }
+    .poll-option,
+    .quiz-btn,
+    .tag,
+    .profile-card,
+    .grid-cell {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1.5px solid #e5e7eb;
+      background: #ffffff;
+      font-size: 13px;
+      color: #1f2933;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .poll-option:hover,
+    .quiz-btn:hover,
+    .tag:hover,
+    .profile-card:hover,
+    .grid-cell:hover {
+      border-color: #a855f7;
+      background: #ede9fe;
+      color: #4c1d95;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(129, 140, 248, 0.35);
+    }
+    .poll-option.selected,
+    .tag.selected,
+    .profile-card.selected,
+    .grid-cell.selected {
+      border-color: #22c55e;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #ecfdf5;
+    }
+    .poll-option.selected-warn { border-color: #f97316; background: #f97316; color: #fffbeb; }
+    .feedback-box {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      display: none;
+    }
+    .feedback-correct { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
+    .feedback-wrong { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .feedback-neutral { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .quiz-item { margin-bottom: 16px; }
+    .quiz-statement { font-size: 14px; color: #111827; font-weight: 700; margin-bottom: 8px; line-height: 1.5; }
+    .quiz-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .quiz-btn.correct { background: #22c55e; border-color: #22c55e; color: #ecfdf5; }
+    .quiz-btn.wrong { background: #ef4444; border-color: #ef4444; color: #fef2f2; }
+    .quiz-btn:disabled { cursor: default; opacity: 0.8; }
+    .quiz-feedback { font-size: 12px; margin-top: 5px; min-height: 16px; }
+    .quiz-feedback.ok { color: #166534; }
+    .quiz-feedback.nok { color: #b91c1c; }
+    .profiles-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; margin-top:8px; }
+    .profile-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .profile-photo {
+      width:40px; height:40px; border-radius:50%;
+      object-fit: cover; flex-shrink:0;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
+    }
+    .profile-role { font-size:11px; color:#6b7280; }
+    .profile-body { font-size:13px; color:#374151; line-height:1.6; }
+    .profile-help { display:none; margin-top:8px; font-size:13px; color:#022c22; background:#ecfdf5; border-radius:10px; padding:8px 10px; border:1px solid #bbf7d0; }
+    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; margin-top:8px; }
+    .grid-label { font-size:12px; color:#6b7280; margin-bottom:4px; }
+    .nav-btns { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; gap: 10px; }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn:hover { opacity: 0.96; transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%);
+      color: #f5f3ff;
+      box-shadow: 0 10px 18px rgba(129, 140, 248, 0.55);
+    }
+    .btn-outline {
+      background: rgba(255,255,255,0.95);
+      color: #4c1d95;
+      border: 1px solid #e5e7eb;
+    }
+    .btn-outline:hover { background: #ede9fe; }
+    .btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+    @media (max-width: 640px) {
+      body { padding: 1rem; }
+      .profiles-grid { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .nav-btns { flex-direction: column; }
+      .nav-btns .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-badge">Tutorialul 15</div>
+      <h1>🚀 Nimeni nu rămâne în urmă! Cum ajutăm copiii în situații de risc</h1>
+      <p>Modulul: <em>Respectarea, apărarea și promovarea drepturilor copilului (Copiii în situații de risc și CES)</em>. Timpul necesar pentru a-ți activa superputerea empatiei!</p>
+      <div class="hero-meta">
+        <span>⏱ 50 de minute</span>
+        <span>⭐ 6 leveluri</span>
+        <span>💜 temă vizuală violet deschis</span>
+      </div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+      <div class="progress-label" id="progressLabel">0 din 6 leveluri completate</div>
+    </div>
+
+    <div class="score-bar">🏆 Puncte din activități: <span id="scoreDisplay">0</span>/100</div>
+    <div class="levels-nav" id="levelsNav"></div>
+    <div id="levelContent"></div>
+
+    <div class="nav-btns">
+      <button class="btn btn-outline" id="prevBtn" disabled>&larr; Înapoi</button>
+      <button class="btn btn-primary" id="nextBtn">Înainte &rarr;</button>
+    </div>
+  </div>
+
+  <div id="all-templates" style="display:none;">
+    <div id="tpl-0">
+      <p class="level-body">Salut și bine ai venit la primul tutorial din <strong>Modulul 4</strong> pe platforma ta favorită, <strong>Puterea vocii tale</strong>! 🌍 Sloganul nostru capătă azi o importanță vitală: <strong>Gândește liber, Vorbește pentru toți, Schimbă lumea!</strong></p>
+      <p class="level-body" style="margin-top:10px;">Până acum ai aflat ce drepturi ai și cum te poți apăra. Dar a fi lider nu înseamnă să te gândești doar la tine. Lumea nu este întotdeauna un loc corect, iar în jurul tău s-ar putea să existe copii care duc o luptă invizibilă, despre care nu vorbesc cu nimeni.</p>
+      <p class="level-body" style="margin-top:10px;">Astăzi vom învăța cum să recunoaștem colegii aflați în situații de risc sau pe cei cu Cerințe Educative Speciale (CES) și cum putem fi noi plasa lor de salvare. Ești gata să devii un erou pentru cei vulnerabili? Hai să dăm Play! ▶️</p>
+      <div class="activity-box">
+        <div class="activity-title">🎯 Întrebare de pornire – Ce vezi cu ochii tăi?</div>
+        <div class="activity-question">Când vezi un coleg care greșește des la ore sau lipsește mult de la școală, care este primul tău gând?</div>
+        <div class="poll-options" id="pollStart">
+          <button class="poll-option" data-poll="start" data-val="a">„Nu vrea să învețe, e leneș.”</button>
+          <button class="poll-option" data-poll="start" data-val="b">„Poate se întâmplă ceva în viața lui, dar nu e treaba mea.”</button>
+          <button class="poll-option" data-poll="start" data-val="c">„Nu știu ce se întâmplă, dar ar fi bine să îl ascult înainte să îl judec.”</button>
+        </div>
+        <div class="feedback-box feedback-wrong" id="pollstart-fb-a">Eticheta „leneș” ascunde, de multe ori, o poveste de care nu știi. Azi vei învăța să vezi dincolo de aparențe.</div>
+        <div class="feedback-box feedback-neutral" id="pollstart-fb-b">Mulți copii gândesc așa, dar un lider adevărat iese din zona „nu e treaba mea” și devine aliat.</div>
+        <div class="feedback-box feedback-correct" id="pollstart-fb-c">Exact aceasta este atitudinea unui lider empatic: mai întâi asculți, apoi judeci situația, nu persoana.</div>
+      </div>
+    </div>
+
+    <div id="tpl-1">
+      <p class="level-body"><strong>🟢 LEVEL 1: Barierele invizibile – Ce înseamnă „situație de risc” și CES?</strong></p>
+      <p class="level-body" style="margin-top:8px;">Imaginează-ți că toți copiii din lume ar trebui să alerge la o cursă cu obstacole. Unii aleargă pe o pistă curată. Alții, însă, au de sărit peste garduri uriașe sau poartă în spate rucsacuri pline cu pietre. Acele pietre sunt <strong>situațiile de risc</strong>.</p>
+      <p class="level-body" style="margin-top:8px;"><strong>⚠️ Situația de risc:</strong> Este un pericol grav din viața unui copil care îi blochează dezvoltarea normală. Un copil este în situație de risc dacă trăiește în sărăcie extremă, dacă este neglijat sau abuzat acasă, dacă este forțat să muncească în loc să meargă la școală sau dacă părinții nu se pot ocupa de el.</p>
+      <p class="level-body" style="margin-top:8px;"><strong>🧠 CES (Cerințe Educative Speciale):</strong> Ai auzit probabil acest termen în școală. El se referă la copiii care au nevoie de un sprijin diferit pentru a învăța. Poate fi vorba de o dizabilitate fizică (ex: folosesc un scaun cu rotile), dar de cele mai multe ori este invizibilă: cum ar fi dislexia (când literele par că „dansează” pe foaie și citești mai greu) sau ADHD (când mintea ta are atâta energie încât îți este imposibil să stai pe scaun 50 de minute). Acești copii sunt la fel de inteligenți, dar au nevoie de „alte unelte” pentru a reuși!</p>
+      <div class="activity-box">
+        <div class="activity-title">🔎 Mini-test: Situație de risc sau CES?</div>
+        <div class="activity-question">Pentru fiecare exemplu, marchează dacă este mai degrabă o <strong>situație de risc</strong> sau o <strong>Cerință Educativă Specială (CES)</strong>.</div>
+        <div class="grid" id="riskGrid">
+          <div>
+            <div class="grid-label">Un copil este obligat să muncească la câmp și lipsește mult de la școală.</div>
+            <button class="grid-cell" data-id="r1" data-type="risc">Situație de risc</button>
+            <button class="grid-cell" data-id="r1" data-type="ces">CES (Cerințe educative speciale)</button>
+          </div>
+          <div>
+            <div class="grid-label">Un copil folosește scaun cu rotile și are nevoie de rampă la intrarea în școală.</div>
+            <button class="grid-cell" data-id="r2" data-type="risc">Situație de risc</button>
+            <button class="grid-cell" data-id="r2" data-type="ces">CES (Cerințe educative speciale)</button>
+          </div>
+          <div>
+            <div class="grid-label">Un copil are dislexie și citește mai greu, dar înțelege foarte bine explicațiile.</div>
+            <button class="grid-cell" data-id="r3" data-type="risc">Situație de risc</button>
+            <button class="grid-cell" data-id="r3" data-type="ces">CES (Cerințe educative speciale)</button>
+          </div>
+          <div>
+            <div class="grid-label">Un copil nu are haine groase de iarnă și se îmbolnăvește des.</div>
+            <button class="grid-cell" data-id="r4" data-type="risc">Situație de risc</button>
+            <button class="grid-cell" data-id="r4" data-type="ces">CES (Cerințe educative speciale)</button>
+          </div>
+        </div>
+        <div class="feedback-box" id="riskFeedback"></div>
+      </div>
+    </div>
+
+    <div id="tpl-2">
+      <p class="level-body"><strong>🟢 LEVEL 2: Misiunea ta de Detectiv – Cazul „Secretul lui Alex”</strong></p>
+      <p class="level-body" style="margin-top:8px;">📌 Cazul de investigat: Alex este elev în clasa a V-a. În ultima vreme, la orele de Română, când este pus să citească cu voce tare, se blochează, amestecă literele și se enervează, aruncând cartea. Unii colegi râd de el și îl numesc „Leneșul”. Mai mult, Alex a început să lipsească de la școală câte 2-3 zile pe săptămână, iar când vine, e mereu obosit.</p>
+      <p class="level-body" style="margin-top:8px;">Într-o pauză, colega lui, Irina, nu râde. Ea merge la el, îi oferă jumătate din sandvișul ei și îl întreabă calm ce se întâmplă. Alex prinde curaj și îi spune două secrete: 1) Are dislexie (CES), iar cuvintele pe foaie i se par un labirint, deși el rezolvă exerciții geniale la matematică în minte. 2) Familia lui a rămas fără bani, așa că Alex este obligat să stea acasă și să aibă grijă de fratele lui de 3 ani, cât timp mama lui lucrează cu ziua (situație de risc social).</p>
+      <p class="level-body" style="margin-top:8px;">Irina nu păstrează tăcerea. Ea merge direct la doamna consilier școlar și îi povestește situația.</p>
+      <div class="activity-box">
+        <div class="activity-title">🧠 Reflectă ca un lider</div>
+        <div class="activity-question">Bifează afirmațiile corecte despre cazul lui Alex.</div>
+        <div class="poll-options" id="alexPoll">
+          <button class="poll-option" data-id="a1" data-correct="true">Colegiilor care îl strigă „leneș” le scapă faptul că Alex are un obstacol invizibil (CES).</button>
+          <button class="poll-option" data-id="a2" data-correct="false">Irina a fost „pârăcioasă” pentru că a vorbit cu consilierul școlar.</button>
+          <button class="poll-option" data-id="a3" data-correct="true">Situația de acasă îl pune pe Alex în risc de abandon școlar.</button>
+        </div>
+        <div class="feedback-box" id="alexFeedback"></div>
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">💬 Întrebări pentru jurnalul tău</div>
+        <p class="level-body">Ce au greșit colegii care l-au numit pe Alex „leneș”? (Indiciu: Au folosit un stereotip și au ignorat faptul că el se confrunta cu un obstacol invizibil - o cerință educativă specială).</p>
+        <p class="level-body" style="margin-top:8px;">De ce gestul Irinei de a vorbi cu consilierul NU este o „pâră”, ci un act de salvare?</p>
+        <p class="level-body" style="margin-top:8px;">În ce fel de situație de risc se afla Alex acasă? (Risc de abandon școlar din cauza lipsurilor materiale).</p>
+      </div>
+    </div>
+
+    <div id="tpl-3">
+      <p class="level-body"><strong>🟢 LEVEL 3: Radarul Liderului – Cum îi recunoști pe cei vulnerabili?</strong></p>
+      <p class="level-body" style="margin-top:8px;">Un lider are un „radar” special: <strong>empatia</strong> (capacitatea de a te pune în papucii celuilalt). Copiii aflați în situații de risc nu vin cu o pancartă pe care să scrie „Am nevoie de ajutor!”. De cele mai multe ori, ei se ascund.</p>
+      <p class="level-body" style="margin-top:8px;">Cum îi poți recunoaște?</p>
+      <ul class="level-body" style="padding-left:1.1rem; margin-top:4px;">
+        <li>Sunt foarte retrași, triști sau refuză să participe la jocuri;</li>
+        <li>Lipsesc foarte des de la școală sau abandonează complet cursurile;</li>
+        <li>Sunt obosiți constant;</li>
+        <li>Devin brusc agresivi sau defensivi (acesta este un mecanism de apărare pentru că se simt neînțeleși).</li>
+      </ul>
+      <p class="level-body" style="margin-top:8px;"><strong>Când vezi aceste semne, regula este simplă: nu îi judeca, nu îi izola! Întreabă-i cum se simt!</strong></p>
+      <div class="activity-box">
+        <div class="activity-title">🧭 Busola empatiei</div>
+        <div class="activity-question">Alege reacția care arată cu adevărat empatie în fața unui coleg vulnerabil.</div>
+        <div class="quiz-item">
+          <div class="quiz-statement">Colegul tău țipă la tine fără motiv la o oră.</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q1" data-answer="a">Țipi și tu la el ca să „învețe minte”.</button>
+            <button class="quiz-btn" data-q="q1" data-answer="b">Te oprești o clipă și te întrebi ce se întâmplă cu el în spate, apoi îi spui calm că vrei să discutați.</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q1"></div>
+        </div>
+        <div class="quiz-item">
+          <div class="quiz-statement">O colegă lipsește tot mai des de la școală.</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q2" data-answer="a">Spui tuturor că „chiulește și nu o interesează școala”.</button>
+            <button class="quiz-btn" data-q="q2" data-answer="b">O întrebi într-o pauză dacă este bine și, dacă te îngrijorează ceva, vorbești cu un adult de încredere.</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q2"></div>
+        </div>
+        <div class="feedback-box feedback-correct" id="quiz-final-fb" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div id="tpl-4">
+      <p class="level-body"><strong>🟢 LEVEL 4: Efectul de Bumerang (Responsabilitatea ta!)</strong></p>
+      <p class="level-body" style="margin-top:8px;">Așa cum te-am învățat mereu: <strong>Niciun Drept nu funcționează fără o Responsabilitate</strong>!</p>
+      <p class="level-body" style="margin-top:8px;">Statul trebuie să asigure protecție acestor copii, dar și tu ai o responsabilitate uriașă în clasa ta:</p>
+      <div class="callout">
+        <strong>❌ ESTE INTERZIS (Game Over):</strong><br>
+        Să râzi de un coleg care citește mai greu, care nu înțelege o lecție (care are CES) sau care are haine mai vechi;<br>
+        Să ignori un coleg care trece printr-o criză, crezând că „nu e treaba ta”.
+      </div>
+      <div class="callout callout-green">
+        <strong>✅ LEVEL UP (Atitudinea de lider):</strong><br>
+        Fii un „Aliat”! Dacă observi că un coleg este abuzat acasă, obligat să muncească sau neglijat, ai responsabilitatea să anunți urgent un adult de încredere (dirigintele, directorul, un profesor). Doar așa se pot activa instituțiile statului care îl vor salva!
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">🌈 Galeria Aliaților – Activitate nouă</div>
+        <div class="activity-question">Selectează un copil pentru a vedea <strong>cum îl poți integra și ajuta</strong> în mod concret.</div>
+        <div class="profiles-grid" id="profilesGrid"></div>
+      </div>
+    </div>
+
+    <div id="tpl-5">
+      <p class="level-body"><strong>🚀 LEVEL 5: CHALLENGE-UL SĂPTĂMÂNII (Fii Aliatul!)</strong></p>
+      <p class="level-body" style="margin-top:8px;">Teoria e grozavă, dar lumea se schimbă prin acțiune. Astăzi ești provocat să îți folosești empatia în cel mai pur mod cu putință.</p>
+      <p class="level-body" style="margin-top:8px;"><strong>📱 CHALLENGE: „Zona de Siguranță”</strong></p>
+      <p class="level-body" style="margin-top:8px;">Misiunea ta:</p>
+      <ul class="level-body" style="padding-left:1.1rem; margin-top:4px;">
+        <li>Analizează puțin atmosfera din clasa ta. Există vreun coleg care, poate din cauza unor dificultăți de învățare (CES) sau a unor probleme de acasă, stă mai mult singur și este evitat de ceilalți?</li>
+        <li>Mâine, fă primul pas. Mergi la acel coleg și propune-i să faceți echipă la un proiect, oferă-i o mână de ajutor la o temă sau pur și simplu stai de vorbă cu el într-o pauză despre un joc/subiect pe care îl iubește.</li>
+      </ul>
+      <p class="level-body" style="margin-top:8px;">Transformă spațiul din jurul tău într-o „Zonă de Siguranță” în care nimeni nu este etichetat. Nu poți rezolva tu toate problemele lumii, dar poți fi motivul pentru care un copil prins într-o situație de risc prinde curaj să zâmbească din nou!</p>
+      <div class="activity-box">
+        <div class="activity-title">🎯 Micro-quiz final</div>
+        <div class="activity-question">Ce înseamnă, de fapt, să fii „aliat” al copiilor în situații de risc sau cu CES?</div>
+        <div class="poll-options" id="pollFinal">
+          <button class="poll-option" data-poll="final" data-val="a">Să îi compătimești în tăcere, fără să intervii niciodată.</button>
+          <button class="poll-option" data-poll="final" data-val="b">Să le oferi sprijin, să le respecți demnitatea și să anunți un adult de încredere când observi un pericol.</button>
+          <button class="poll-option" data-poll="final" data-val="c">Să vorbești în locul lor, fără să îi întrebi ce simt sau ce își doresc.</button>
+        </div>
+        <div class="feedback-box feedback-wrong" id="pollfinal-fb-a">Empatia nu înseamnă doar să te întristezi. Fără acțiune, copilul rămâne singur în lupta lui.</div>
+        <div class="feedback-box feedback-correct" id="pollfinal-fb-b">Exact! Un aliat îi vede, îi respectă, îi sprijină și cere ajutorul adulților când este nevoie.</div>
+        <div class="feedback-box feedback-neutral" id="pollfinal-fb-c">Intenția este bună, dar e important să îi asculți și să le respecți vocea, nu să decizi totul în locul lor.</div>
+      </div>
+      <div class="callout" style="margin-top:10px;">
+        <strong>Felicitări!</strong> Ți-ai activat superputerea empatiei și știi acum că, în clasa ta, nimeni nu ar trebui să rămână în urmă.<br>
+        <strong>Gândește liber, Vorbește pentru toți, Schimbă lumea! 🌍</strong>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const levels = [
+      { icon: '💜', title: 'De la eu la NOI', time: '8 minute', points: 10, tpl: 'tpl-0', btnText: 'Mi-am deschis ochii — Trec la Level 1' },
+      { icon: '🎒', title: 'Bariere invizibile', time: '10 minute', points: 20, tpl: 'tpl-1', btnText: 'Înțeleg riscul și CES — Trec la Level 2' },
+      { icon: '📚', title: 'Cazul „Secretul lui Alex”', time: '15 minute', points: 25, tpl: 'tpl-2', btnText: 'Am analizat cazul — Trec la Level 3' },
+      { icon: '🧭', title: 'Radarul liderului', time: '7 minute', points: 15, tpl: 'tpl-3', btnText: 'Mi-am calibrat empatia — Trec la Level 4' },
+      { icon: '🤝', title: 'Galeria aliaților', time: '10 minute', points: 20, tpl: 'tpl-4', btnText: 'Mi-am ales rolul — Trec la Level 5' },
+      { icon: '🏁', title: 'Zona ta de siguranță', time: '5 minute', points: 10, tpl: 'tpl-5', btnText: 'Misiune îndeplinită ✔' }
+    ];
+
+    let current = 0;
+    const total = levels.length;
+    let score = 0;
+    const awarded = {};
+    const quizAnswered = {};
+
+    const profiles = [
+      {
+        id: 'p1',
+        initial: 'M',
+        name: 'Mara, 11 ani',
+        label: 'copil cu CES (dislexie)',
+        desc: 'Când citește cu voce tare, se blochează și roșește. Unii colegi spun că „nu e atentă la ore”.',
+        help: 'Poți să o ajuți citind pe rând cu ea, fără să o grăbești, și să îi propui profesorului să îi dea mai mult timp la citit și teste. Laudă-i ideile bune de la discuții, nu doar viteza de citire.'
+      },
+      {
+        id: 'p2',
+        initial: 'D',
+        name: 'Denis, 12 ani',
+        label: 'copil în risc social',
+        desc: 'Vine des flămând la școală și lipsește uneori pentru că are grijă de frații mai mici. Pare mereu obosit.',
+        help: 'Poți împărți cu el gustarea ta, îl poți invita în echipă la proiecte și poți discuta cu dirigintele sau consilierul despre situația lui, ca să primească ajutor de la școală sau de la servicii sociale.'
+      },
+      {
+        id: 'p3',
+        initial: 'A',
+        name: 'Ana, 10 ani',
+        label: 'copil cu dizabilitate fizică',
+        desc: 'Foloseste un scaun cu rotile. Unii colegi joacă fotbal unde ea nu poate intra ușor.',
+        help: 'Poți propune jocuri la care poate participa și ea (board games, jocuri de rol), să ai grijă să nu blocați rampa cu ghiozdane și să o întrebi direct ce ar ajuta-o, în loc să presupui tu.'
+      },
+      {
+        id: 'p4',
+        initial: 'S',
+        name: 'Sara, 13 ani',
+        label: 'copil care trece printr-o criză familială',
+        desc: 'De când părinții s-au despărțit, este foarte tăcută, tristă și se retrage la pauze.',
+        help: 'Poți să îi arăți că e binevenită în grupul tău, să vorbești cu ea fără să o forțezi să povestească tot și, dacă pare foarte afectată, să încurajezi o discuție cu un adult de încredere.'
+      }
+    ];
+
+    function addPoints(key, amount) {
+      if (awarded[key]) return;
+      awarded[key] = true;
+      score += amount;
+      if (score > 100) score = 100;
+      document.getElementById('scoreDisplay').textContent = score;
+    }
+
+    function renderNav() {
+      const nav = document.getElementById('levelsNav');
+      let html = '';
+      for (let i = 0; i < levels.length; i++) {
+        let cls = 'level-dot';
+        if (i === current) cls += ' active';
+        else if (i < current) cls += ' done';
+        html += '<div class="' + cls + '" data-idx="' + i + '">' + (i + 1) + '</div>';
+      }
+      nav.innerHTML = html;
+      nav.querySelectorAll('.level-dot').forEach(dot => {
+        dot.addEventListener('click', function() {
+          current = parseInt(this.getAttribute('data-idx'), 10);
+          renderContent();
+        });
+      });
+    }
+
+    function renderContent() {
+      const lvl = levels[current];
+      const tplEl = document.getElementById(lvl.tpl);
+      const bodyHTML = tplEl ? tplEl.innerHTML : '';
+      document.getElementById('levelContent').innerHTML = `
+        <div class="level-card">
+          <div class="level-header">
+            <div class="level-icon">${lvl.icon}</div>
+            <div>
+              <div class="level-title">Level ${current + 1}: ${lvl.title}</div>
+              <div class="level-time">Timp estimat: ${lvl.time}</div>
+            </div>
+          </div>
+          <div>${bodyHTML}</div>
+        </div>
+      `;
+
+      const pct = Math.round((current / total) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = current + ' din ' + total + ' leveluri completate';
+      document.getElementById('prevBtn').disabled = current === 0;
+      document.getElementById('nextBtn').disabled = false;
+      document.getElementById('nextBtn').innerHTML = current === total - 1 ? 'Misiune îndeplinită ✔' : lvl.btnText;
+
+      renderNav();
+      if (current === 0) initPoll('start', 10);
+      if (current === 1) initRiskGrid();
+      if (current === 2) initAlexPoll();
+      if (current === 3) initEmpathyQuiz();
+      if (current === 4) initProfiles();
+      if (current === 5) initPoll('final', 15);
+    }
+
+    function initPoll(pollId, points) {
+      const selector = '[data-poll="' + pollId + '"]';
+      const btns = document.querySelectorAll(selector);
+      btns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const val = this.getAttribute('data-val');
+          btns.forEach(b => b.classList.remove('selected', 'selected-warn'));
+          if (val === 'b' || val === 'c') this.classList.add('selected');
+          else this.classList.add('selected-warn');
+          document.querySelectorAll('[id^="poll' + pollId + '-fb-"]').forEach(fb => fb.style.display = 'none');
+          const fb = document.getElementById('poll' + pollId + '-fb-' + val);
+          if (fb) fb.style.display = 'block';
+          addPoints('poll-' + pollId, points);
+        });
+      });
+    }
+
+    function initRiskGrid() {
+      const cells = document.querySelectorAll('#riskGrid .grid-cell');
+      const fb = document.getElementById('riskFeedback');
+      const correctMap = { r1: 'risc', r2: 'ces', r3: 'ces', r4: 'risc' };
+      cells.forEach(cell => {
+        cell.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          const type = this.getAttribute('data-type');
+          document.querySelectorAll('#riskGrid .grid-cell[data-id="' + id + '"]').forEach(c => c.classList.remove('selected'));
+          this.classList.add('selected');
+          const allIds = Object.keys(correctMap);
+          const allAnswered = allIds.every(key => {
+            const chosen = document.querySelector('#riskGrid .grid-cell[data-id="' + key + '"].selected');
+            return !!chosen;
+          });
+          fb.style.display = 'block';
+          if (!allAnswered) {
+            fb.className = 'feedback-box feedback-neutral';
+            fb.textContent = 'Continuă: marchează pentru fiecare exemplu dacă este situație de risc sau CES.';
+            return;
+          }
+          let allCorrect = true;
+          allIds.forEach(key => {
+            const chosen = document.querySelector('#riskGrid .grid-cell[data-id="' + key + '"].selected');
+            if (!chosen || chosen.getAttribute('data-type') !== correctMap[key]) allCorrect = false;
+          });
+          if (allCorrect) {
+            fb.className = 'feedback-box feedback-correct';
+            fb.textContent = 'Bravo! Ai încadrat corect toate exemplele. Situația de risc ține de condițiile de viață, CES de felul în care are nevoie să învețe copilul. +20 puncte';
+            addPoints('risk', 20);
+          } else {
+            fb.className = 'feedback-box feedback-neutral';
+            fb.textContent = 'Mai uită-te o dată: ce ține de condițiile de viață ale copilului și ce ține de modul în care are nevoie să fie sprijinit la învățare?';
+          }
+        });
+      });
+    }
+
+    function initAlexPoll() {
+      const fb = document.getElementById('alexFeedback');
+      const btns = document.querySelectorAll('#alexPoll .poll-option');
+      btns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          this.classList.toggle('selected');
+          const selected = Array.from(btns).filter(b => b.classList.contains('selected'));
+          const correctIds = ['a1', 'a3'];
+          const selectedIds = selected.map(b => b.getAttribute('data-id'));
+          const allCorrect = correctIds.every(id => selectedIds.includes(id));
+          const noExtra = selectedIds.every(id => correctIds.includes(id));
+          fb.style.display = 'block';
+          if (allCorrect && noExtra && selectedIds.length === correctIds.length) {
+            fb.className = 'feedback-box feedback-correct';
+            fb.textContent = 'Exact! Colegii lui Alex l-au judecat greșit, iar Irina a fost aliat, nu „pârăcioasă”. +25 puncte';
+            addPoints('alex', 25);
+          } else {
+            fb.className = 'feedback-box feedback-neutral';
+            fb.textContent = 'Mai gândește-te: cine îl ajută cu adevărat pe Alex și cine doar îl etichetează?';
+          }
+        });
+      });
+    }
+
+    function initEmpathyQuiz() {
+      const correct = { q1: 'b', q2: 'b' };
+      document.querySelectorAll('.quiz-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const q = this.getAttribute('data-q');
+          if (quizAnswered[q]) return;
+          quizAnswered[q] = true;
+          const answer = this.getAttribute('data-answer');
+          const expected = correct[q];
+          document.querySelectorAll('[data-q="' + q + '"]').forEach(b => b.disabled = true);
+          const fb = document.getElementById('fb-' + q);
+          if (answer === expected) {
+            this.classList.add('correct');
+            fb.textContent = '✔ Aceasta este reacția unui lider empatic.';
+            fb.className = 'quiz-feedback ok';
+            addPoints('quiz-' + q, 5);
+          } else {
+            this.classList.add('wrong');
+            const correctBtn = document.querySelector('[data-q="' + q + '"][data-answer="' + expected + '"]');
+            if (correctBtn) correctBtn.classList.add('correct');
+            fb.textContent = '✘ Gândește-te cum s-ar simți colegul tău dacă ar fi în locul tău.';
+            fb.className = 'quiz-feedback nok';
+          }
+          if (Object.keys(quizAnswered).length === 2) {
+            const finalFb = document.getElementById('quiz-final-fb');
+            finalFb.style.display = 'block';
+            finalFb.textContent = '🎉 Super! Radarul tău al empatiei funcționează din ce în ce mai bine.';
+            addPoints('quiz-all', 10);
+          }
+        });
+      });
+    }
+
+    function initProfiles() {
+      const grid = document.getElementById('profilesGrid');
+      if (!grid) return;
+      const imgMap = {
+        p1: 'https://pplx-res.cloudinary.com/image/upload/pplx_search_images/70cd89848d28e8e63bcd604f73f3aeb16fc53b3a.jpg',
+        p2: 'https://pplx-res.cloudinary.com/image/upload/pplx_search_images/05e2cfede6352d7ebbbe592ade136a3360c28a27.jpg',
+        p3: 'https://picsum.photos/seed/ana-10-ani-ally/200/200',
+        p4: 'https://picsum.photos/seed/sara-13-ani-ally/200/200'
+      };
+      grid.innerHTML = profiles.map(p => `
+        <div class="profile-card" data-id="${p.id}">
+          <div class="profile-header">
+            <img class="profile-photo" src="${imgMap[p.id]}" alt="${p.label}" loading="lazy">
+            <div>
+              <div class="profile-name">${p.name}</div>
+              <div class="profile-role">${p.label}</div>
+            </div>
+          </div>
+          <div class="profile-body">${p.desc}</div>
+          <div class="profile-help" id="help-${p.id}"><strong>Poți fi aliatul lui/ei astfel:</strong> ${p.help}</div>
+        </div>
+      `).join('');
+
+      const cards = document.querySelectorAll('.profile-card');
+      cards.forEach(card => {
+        card.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          const helpBox = document.getElementById('help-' + id);
+          const isOpen = helpBox.style.display === 'block';
+          document.querySelectorAll('.profile-help').forEach(h => h.style.display = 'none');
+          cards.forEach(c => c.classList.remove('selected'));
+          if (!isOpen) {
+            helpBox.style.display = 'block';
+            this.classList.add('selected');
+            addPoints('profile-' + id, 5);
+          }
+        });
+      });
+    }
+
+    function navigate(dir) {
+      if (dir === 1 && current === total - 1) {
+        document.getElementById('nextBtn').innerHTML = 'Completat! ✔';
+        document.getElementById('nextBtn').disabled = true;
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressLabel').textContent = total + ' din ' + total + ' leveluri completate';
+        renderNav();
+        return;
+      }
+      let next = current + dir;
+      if (next < 0) next = 0;
+      if (next >= total) next = current;
+      current = next;
+      renderContent();
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
+    document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
+
+    renderContent();
+  </script>
+</body>
+</html>
