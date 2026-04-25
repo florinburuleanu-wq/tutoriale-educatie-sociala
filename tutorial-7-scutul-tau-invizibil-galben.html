@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial 7 - Scutul tău invizibil</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(254, 243, 199, 0.7), transparent 40%),
+        radial-gradient(circle at bottom right, rgba(253, 224, 71, 0.35), transparent 36%),
+        #fefce8;
+      padding: 1.5rem;
+      color: #713f12;
+    }
+    .container { max-width: 700px; margin: 0 auto; }
+    .hero {
+      background: linear-gradient(135deg, #facc15 0%, #eab308 45%, #ca8a04 100%);
+      padding: 2rem 1.5rem 1.5rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 42px rgba(202, 138, 4, 0.5);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -45px;
+      right: -40px;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -30px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(254, 243, 199,0.8) 0%, rgba(254,243,199,0.06) 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      color: #fef9c3;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero h1 {
+      color: #fefce8;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero p {
+      color: #fef9c3;
+      font-size: 13px;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta span {
+      color: #fef9c3;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .progress-bar-outer {
+      background: rgba(255,255,255,0.35);
+      border-radius: 10px;
+      height: 7px;
+      margin-top: 14px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #22c55e 0%, #0ea5e9 50%, #6366f1 100%);
+      width: 0;
+      transition: width 0.6s ease;
+    }
+    .progress-label {
+      color: #fef9c3;
+      font-size: 11px;
+      margin-top: 5px;
+      position: relative;
+      z-index: 1;
+    }
+    .score-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, #fefce8 0%, #fef3c7 70%, #fde68a 100%);
+      border: 1px solid #facc15;
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 1rem;
+      font-size: 13px;
+      color: #854d0e;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(234, 179, 8, 0.3);
+    }
+    .levels-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 1.25rem;
+      scrollbar-width: none;
+    }
+    .levels-nav::-webkit-scrollbar { display: none; }
+    .level-dot {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid #fde68a;
+      background: #fefce8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #854d0e;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(234, 179, 8, 0.34);
+    }
+    .level-dot.active {
+      background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+      border-color: #ca8a04;
+      color: #fefce8;
+      transform: translateY(-1px);
+    }
+    .level-dot.done {
+      background: #22c55e;
+      border-color: #22c55e;
+      color: #052e16;
+    }
+    .level-card {
+      background: rgba(255,255,255,0.97);
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 1.3rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 18px 36px rgba(202, 138, 4, 0.22);
+      backdrop-filter: blur(4px);
+    }
+    .level-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .level-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fef9c3 0%, #fefce8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #ca8a04;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .level-title { font-size: 15px; font-weight: 700; color: #111827; }
+    .level-time { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .level-body { font-size: 14px; color: #374151; line-height: 1.75; }
+    .level-body strong { font-weight: 700; color: #111827; }
+    .callout {
+      border-left: 4px solid #facc15;
+      background: linear-gradient(180deg, #fefce8 0%, #fef3c7 100%);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 14px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #854d0e;
+      line-height: 1.6;
+    }
+    .callout-green {
+      border-left-color: #22c55e;
+      background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+      color: #166534;
+    }
+    .activity-box {
+      background: linear-gradient(180deg, #fefce8 0%, #fef3c7 40%, #e0f2fe 100%);
+      border: 1.5px solid #fde68a;
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
+      margin: 14px 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+    }
+    .activity-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ca8a04;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .activity-question {
+      font-size: 14px;
+      color: #111827;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .pill {
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(250, 204, 21, 0.12);
+      color: #854d0e;
+      border: 1px dashed rgba(202, 138, 4, 0.55);
+    }
+    .two-col { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 8px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; }
+    .badge-right { background:#dcfce7; color:#166534; }
+    .badge-resp { background:#e0f2fe; color:#1d4ed8; }
+    .poll-options { display: flex; flex-direction: column; gap: 8px; }
+    .poll-option,
+    .quiz-btn,
+    .tag,
+    .timeline-cell,
+    .grid-cell {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1.5px solid #e5e7eb;
+      background: #ffffff;
+      font-size: 13px;
+      color: #1f2933;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .poll-option:hover,
+    .quiz-btn:hover,
+    .tag:hover,
+    .timeline-cell:hover,
+    .grid-cell:hover {
+      border-color: #facc15;
+      background: #fef3c7;
+      color: #854d0e;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(234, 179, 8, 0.3);
+    }
+    .poll-option.selected,
+    .tag.selected,
+    .timeline-cell.selected,
+    .grid-cell.selected {
+      border-color: #22c55e;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #f0fdf4;
+    }
+    .poll-option.selected-warn { border-color: #f97316; background: #f97316; color: #fffbeb; }
+    .feedback-box {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      display: none;
+    }
+    .feedback-correct { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
+    .feedback-wrong { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .feedback-neutral { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .quiz-item { margin-bottom: 16px; }
+    .quiz-statement { font-size: 14px; color: #111827; font-weight: 700; margin-bottom: 8px; line-height: 1.5; }
+    .quiz-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .quiz-btn.correct { background: #22c55e; border-color: #22c55e; color: #ecfdf5; }
+    .quiz-btn.wrong { background: #ef4444; border-color: #ef4444; color: #fef2f2; }
+    .quiz-btn:disabled { cursor: default; opacity: 0.8; }
+    .quiz-feedback { font-size: 12px; margin-top: 5px; min-height: 16px; }
+    .quiz-feedback.ok { color: #166534; }
+    .quiz-feedback.nok { color: #b91c1c; }
+    .grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:8px; margin-top:8px; }
+    .grid-label { font-size:12px; color:#6b7280; margin-bottom:4px; }
+    .nav-btns { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; gap: 10px; }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn:hover { opacity: 0.96; transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+      color: #fefce8;
+      box-shadow: 0 10px 18px rgba(234, 179, 8, 0.45);
+    }
+    .btn-outline {
+      background: rgba(255,255,255,0.95);
+      color: #854d0e;
+      border: 1px solid #e5e7eb;
+    }
+    .btn-outline:hover { background: #fefce8; }
+    .btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+    @media (max-width: 640px) {
+      body { padding: 1rem; }
+      .two-col { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .nav-btns { flex-direction: column; }
+      .nav-btns .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-badge">Tutorialul 7</div>
+      <h1>🚀 Scutul tău invizibil. Convenția ONU și superputerile tale!</h1>
+      <p>Modulul: <em>Drepturi și responsabilități ale copilului (Convenția ONU)</em>. Timpul în care îți vei activa armura de cetățean!</p>
+      <div class="hero-meta">
+        <span>⏱ 50 de minute</span>
+        <span>⭐ 6 leveluri</span>
+        <span>💛 temă vizuală galbenă</span>
+      </div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+      <div class="progress-label" id="progressLabel">0 din 6 leveluri completate</div>
+    </div>
+
+    <div class="score-bar">🏆 Puncte din activități: <span id="scoreDisplay">0</span>/100</div>
+    <div class="levels-nav" id="levelsNav"></div>
+    <div id="levelContent"></div>
+
+    <div class="nav-btns">
+      <button class="btn btn-outline" id="prevBtn" disabled>&larr; Înapoi</button>
+      <button class="btn btn-primary" id="nextBtn">Înainte &rarr;</button>
+    </div>
+  </div>
+
+  <div id="all-templates" style="display:none;">
+    <div id="tpl-0">
+      <p class="level-body">Salut și bine ai venit la un nou capitol pe platforma <strong>Puterea vocii tale</strong>! 🌍 Sloganul nostru capătă astăzi cea mai mare greutate: <strong>Gândește liber, Vorbește pentru toți, Schimbă lumea!</strong></p>
+      <p class="level-body" style="margin-top:10px;">Până acum ai învățat să pui întrebări ca un detectiv și să argumentezi ca un maestru. Dar ce faci dacă, într-o zi, un adult îți spune că nu ai voie să îți spui părerea pentru că „ești doar un copil”? Sau dacă cineva încearcă să îți ia timpul de joacă sau dreptul de a învăța?</p>
+      <p class="level-body" style="margin-top:10px;">Pentru a putea schimba lumea, trebuie mai întâi să știi cu ce te poți apăra. Astăzi descoperim cel mai puternic instrument creat vreodată pentru tine: <strong>Drepturile tale</strong>. Ești gata să îți activezi scutul invizibil? Hai să dăm Play! ▶️</p>
+      <div class="activity-box">
+        <div class="activity-title">🎯 Întrebare de intrare</div>
+        <div class="activity-question">Când auzi cuvântul „drepturile copilului”, la ce te gândești prima dată?</div>
+        <div class="poll-options" id="pollStart">
+          <button class="poll-option" data-poll="start" data-val="a">La lucruri pe care mi le doresc (cadouri, telefoane, jocuri).</button>
+          <button class="poll-option" data-poll="start" data-val="b">La reguli complicate scrise de adulți undeva, departe de mine.</button>
+          <button class="poll-option" data-poll="start" data-val="c">La o „armură invizibilă” care ar trebui să mă protejeze în viața de zi cu zi.</button>
+        </div>
+        <div class="feedback-box feedback-wrong" id="pollstart-fb-a">Asta seamănă mai mult cu dorințe sau mofturi. Azi vei vedea că drepturile merg mult mai adânc decât cadourile.</div>
+        <div class="feedback-box feedback-neutral" id="pollstart-fb-b">Așa par la prima vedere, dar azi vei descoperi că acest „document complicat” are legătură directă cu viața ta.</div>
+        <div class="feedback-box feedback-correct" id="pollstart-fb-c">Exact! Convenția ONU chiar este un fel de armură invizibilă care spune ce nu are voie să-ți facă nimeni.</div>
+      </div>
+    </div>
+
+    <div id="tpl-1">
+      <p class="level-body"><strong>🟢 LEVEL 1: „Manualul de Instrucțiuni” al Planetei</strong></p>
+      <p class="level-body" style="margin-top:8px;">Te-ai jucat vreodată un joc video în care nu existau reguli, iar cei mai mari și mai puternici jucători puteau să fure totul de la cei aflați la început? Așa ar fi și lumea noastră fără legi: un loc condus doar de forță.</p>
+      <p class="level-body" style="margin-top:8px;">Deoarece copiii sunt la început de drum și au nevoie de o protecție specială pentru a crește sănătoși și fericiți, liderii planetei s-au așezat la o masă uriașă și au scris un document istoric. Se numește <strong>Convenția ONU cu privire la Drepturile Copilului</strong> (adoptată în 1989 și valabilă și în România).</p>
+      <p class="level-body" style="margin-top:8px;">Gândește-te la ea ca la <strong>manualul suprem de instrucțiuni al Pământului</strong>! Această lege spune că orice persoană sub 18 ani primește automat, din prima secundă de viață, un set de drepturi pe care niciun adult, profesor, părinte sau primar nu are voie să le încalce.</p>
+      <div class="activity-box">
+        <div class="activity-title">📘 Harta Convenției</div>
+        <div class="activity-question">Marchează afirmațiile care descriu corect Convenția ONU cu privire la Drepturile Copilului.</div>
+        <div class="grid" id="convGrid">
+          <div>
+            <div class="grid-label">„Este un document internațional care protejează copiii din toată lumea.”</div>
+            <button class="grid-cell" data-id="c1" data-correct="true">Corect – acesta este chiar scopul ei.</button>
+          </div>
+          <div>
+            <div class="grid-label">„Este o recomandare opțională, pe care statele o pot ignora fără consecințe.”</div>
+            <button class="grid-cell" data-id="c2" data-correct="false">Greșit – statele care o semnează au obligații legale.</button>
+          </div>
+          <div>
+            <div class="grid-label">„Se aplică tuturor persoanelor sub 18 ani.”</div>
+            <button class="grid-cell" data-id="c3" data-correct="true">Corect – este vorba despre toți copiii și adolescenții.</button>
+          </div>
+        </div>
+        <div class="feedback-box" id="convFeedback"></div>
+      </div>
+    </div>
+
+    <div id="tpl-2">
+      <p class="level-body"><strong>🟢 LEVEL 2: Misiunea ta de Detectiv – Cazul „Parcul de Beton”</strong></p>
+      <p class="level-body" style="margin-top:8px;">📌 Cazul de investigat: Primarul unui oraș a decis să asfalteze singurul parc din cartier pentru a construi o parcare uriașă. Când a fost întrebat la televizor de ce distruge locul de joacă al copiilor, el a râs și a spus: „Copiii din ziua de azi oricum stau doar pe tablete și telefoane, nu mai au nevoie de parc! Adulții aduc bani în oraș, deci mașinile lor sunt mai importante!”</p>
+      <p class="level-body" style="margin-top:8px;">În loc să se plângă pe internet, un grup de elevi de clasa a V-a a trecut la fapte. Au mers la ședința Consiliului Local și, folosind Convenția ONU, au adus următoarele argumente:</p>
+      <div class="callout callout-green">
+        <p class="level-body">(1) Ne încălcați <strong>dreptul la joc</strong> și la activități recreative în aer liber!<br>
+        (2) Ne încălcați <strong>dreptul la un mediu sănătos</strong>!<br>
+        (3) Conform legii, <strong>interesele copiilor trebuie să fie pe primul loc</strong> atunci când se iau decizii în oraș, nu interesele mașinilor!</p>
+      </div>
+      <p class="level-body" style="margin-top:8px;">Auzind aceste argumente legale din gura unor copii de 11 ani, consilierii au fost uimiți, presa a scris despre ei, iar primarul a fost obligat să anuleze proiectul parcării.</p>
+      <div class="activity-box">
+        <div class="activity-title">🕵️ Detectează drepturile încălcate</div>
+        <div class="activity-question">Asociază fiecare argument al copiilor cu un tip de drept.</div>
+        <div class="grid" id="parkGrid"></div>
+        <div class="feedback-box" id="parkFeedback"></div>
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">💬 Reflecție – Gândește liber</div>
+        <p class="level-body">Dacă acești copii nu și-ar fi cunoscut drepturile, cum ar fi arătat cartierul lor astăzi?</p>
+        <p class="level-body" style="margin-top:8px;">Ce a greșit primarul în atitudinea sa? (Indiciu: A folosit un stereotip – „toți copiii stau pe tablete” – pentru a le anula un drept fundamental).</p>
+      </div>
+    </div>
+
+    <div id="tpl-3">
+      <p class="level-body"><strong>🟢 LEVEL 3: Capcana Minții – Drept vs. Moft</strong></p>
+      <p class="level-body" style="margin-top:8px;">Un lider inteligent știe să nu își piardă credibilitatea. Dacă vrei să fii luat în serios de adulți, nu poți folosi cuvântul „DREPT” pentru orice fleac.</p>
+      <p class="level-body" style="margin-top:8px;">Să clarificăm:</p>
+      <div class="two-col">
+        <div>
+          <span class="badge badge-right">DREPT</span>
+          <p class="level-body" style="margin-top:6px;">Este ceva de care ai nevoie obligatoriu pentru a supraviețui, a fi protejat și a te dezvolta armonios. (Exemple: dreptul la educație, la îngrijire medicală, la familie, la o identitate).</p>
+        </div>
+        <div>
+          <span class="badge badge-resp">MOFT</span>
+          <p class="level-body" style="margin-top:6px;">Este ceva ce te-ar face fericit pe moment, dar fără de care poți trăi excelent. (Exemple: vreau cei mai scumpi adidași, vreau să mănânc doar fast-food, vreau un telefon de ultimă generație).</p>
+        </div>
+      </div>
+      <p class="level-body" style="margin-top:8px;">Dacă le spui părinților „Îmi încălcați drepturile pentru că nu mă lăsați să mă joc până la 3 dimineața!”, tocmai ai dovedit că nu știi ce sunt drepturile! Aceea este o dorință, iar părinții tăi tocmai îți protejează dreptul la odihnă.</p>
+      <div class="activity-box">
+        <div class="activity-title">⚖️ Test: Drept sau moft?</div>
+        <div class="activity-question">Pentru fiecare afirmație, alege dacă este DREPT sau MOFT.</div>
+        <div class="quiz-item">
+          <div class="quiz-statement">1. „Să merg la școală și să primesc educație gratuită.”</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q1" data-answer="drept">DREPT</button>
+            <button class="quiz-btn" data-q="q1" data-answer="moft">MOFT</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q1"></div>
+        </div>
+        <div class="quiz-item">
+          <div class="quiz-statement">2. „Să am întotdeauna cel mai nou model de telefon.”</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q2" data-answer="drept">DREPT</button>
+            <button class="quiz-btn" data-q="q2" data-answer="moft">MOFT</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q2"></div>
+        </div>
+        <div class="quiz-item">
+          <div class="quiz-statement">3. „Să primesc îngrijire medicală atunci când sunt bolnav.”</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q3" data-answer="drept">DREPT</button>
+            <button class="quiz-btn" data-q="q3" data-answer="moft">MOFT</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q3"></div>
+        </div>
+        <div class="feedback-box feedback-correct" id="quiz-final-fb" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div id="tpl-4">
+      <p class="level-body"><strong>🟢 LEVEL 4: Efectul de Bumerang (Responsabilitatea!)</strong></p>
+      <p class="level-body" style="margin-top:8px;">Iată regula de aur pe care unii oameni o uită: <strong>Niciun Drept nu funcționează fără o Responsabilitate</strong>. Este exact ca un bumerang! Pentru tot ceea ce primești, ai datoria de a oferi ceva în schimb comunității.</p>
+      <p class="level-body" style="margin-top:8px;">Ai dreptul la opinie? Super! Dar ai responsabilitatea să îți spui părerea fără a-i jigni pe cei din jur.</p>
+      <p class="level-body" style="margin-top:8px;">Ai dreptul la joacă? Perfect! Dar ai responsabilitatea să nu distrugi echipamentele din parc și să nu îi excluzi pe alți copii din jocul tău.</p>
+      <p class="level-body" style="margin-top:8px;">Ai dreptul la educație gratuită? Grozav! Atunci ai responsabilitatea să vii la școală, să respecți profesorii și să nu le strici orele colegilor tăi.</p>
+      <p class="level-body" style="margin-top:8px;"><strong>Drepturile tale se opresc exact în punctul în care încep drepturile colegului tău!</strong></p>
+      <div class="activity-box">
+        <div class="activity-title">🔁 Match: Drept & Bumerangul lui</div>
+        <div class="activity-question">Potrivește fiecare drept cu responsabilitatea care îl însoțește.</div>
+        <div class="grid" id="boomGrid"></div>
+        <div class="feedback-box" id="boomFeedback"></div>
+      </div>
+    </div>
+
+    <div id="tpl-5">
+      <p class="level-body"><strong>🚀 LEVEL 5: CHALLENGE-UL SĂPTĂMÂNII (Fii Apărătorul!)</strong></p>
+      <p class="level-body" style="margin-top:8px;">E timpul să treci de la teorie la practică. Un lider adevărat nu își folosește scutul doar pentru el, ci și pentru cei vulnerabili.</p>
+      <p class="level-body" style="margin-top:8px;"><strong>📱 CHALLENGE: „Avocatul de serviciu”</strong></p>
+      <p class="level-body" style="margin-top:8px;">Misiunea ta:</p>
+      <ul class="level-body" style="padding-left:1.1rem; margin-top:4px;">
+        <li>Gândește-te la o situație pe care ai văzut-o recent la școală sau pe internet, în care un drept al unui copil a fost ignorat.</li>
+        <li>Deschide Jurnalul tău de proiect (sau notează pe telefon). Scrie un scurt mesaj de „Avocat”:</li>
+      </ul>
+      <ul class="level-body" style="padding-left:1.1rem; margin-top:4px; list-style: circle;">
+        <li>Ce drept a fost încălcat?</li>
+        <li>Care ar fi trebuit să fie responsabilitatea celor din jur?</li>
+      </ul>
+      <p class="level-body" style="margin-top:8px;">Dacă acea situație se repetă în realitate în fața ta, nu mai fi un simplu martor. Folosește vocea ta pentru a spune cu calm: „Ceea ce se întâmplă nu este corect. Acest coleg are dreptul la...”.</p>
+      <p class="level-body" style="margin-top:8px;">Astăzi ți-ai luat „licența de apărător”. Folosește-o cu înțelepciune! Gândește liber. Vorbește pentru toți. Schimbă lumea.</p>
+      <div class="activity-box">
+        <div class="activity-title">🎯 Micro-quiz final</div>
+        <div class="activity-question">Ce înseamnă, de fapt, să îți folosești corect „scutul invizibil”?</div>
+        <div class="poll-options" id="pollFinal">
+          <button class="poll-option" data-poll="final" data-val="a">Să invoci „drepturile mele” pentru orice dorință sau moft.</button>
+          <button class="poll-option" data-poll="final" data-val="b">Să îți cunoști drepturile reale și să le folosești cu responsabilitate pentru tine și pentru ceilalți.</button>
+          <button class="poll-option" data-poll="final" data-val="c">Să îi critici dur pe adulți de fiecare dată când greșesc.</button>
+        </div>
+        <div class="feedback-box feedback-wrong" id="pollfinal-fb-a">Asta îți scade credibilitatea. Drepturile nu sunt sinonime cu „vreau orice, oricând”.</div>
+        <div class="feedback-box feedback-correct" id="pollfinal-fb-b">Exact! Adevărata putere vine când îți cunoști drepturile și le folosești cu respect și responsabilitate.</div>
+        <div class="feedback-box feedback-neutral" id="pollfinal-fb-c">E important să semnalezi nedreptățile, dar tonul contează. Scutul tău funcționează cel mai bine când ești ferm și respectuos.</div>
+      </div>
+      <div class="callout" style="margin-top:10px;">
+        <strong>Felicitări!</strong> Ți-ai activat scutul invizibil și știi acum că Drepturile Copilului nu sunt doar un text pe hârtie, ci o armură reală în viața ta de zi cu zi.<br>
+        <strong>Gândește liber, Vorbește pentru toți, Schimbă lumea! 🌍</strong>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const levels = [
+      { icon: '🛡️', title: 'Activează-ți scutul', time: '8 minute', points: 10, tpl: 'tpl-0', btnText: 'Scut activat — Trec la Level 1' },
+      { icon: '📘', title: 'Manualul Planetei', time: '10 minute', points: 20, tpl: 'tpl-1', btnText: 'Am înțeles Convenția — Trec la Level 2' },
+      { icon: '🌳', title: 'Cazul „Parcul de Beton”', time: '15 minute', points: 25, tpl: 'tpl-2', btnText: 'Am apărat parcul — Trec la Level 3' },
+      { icon: '⚖️', title: 'Drept vs. Moft', time: '7 minute', points: 15, tpl: 'tpl-3', btnText: 'Văd clar diferența — Trec la Level 4' },
+      { icon: '🔁', title: 'Efectul de bumerang', time: '10 minute', points: 20, tpl: 'tpl-4', btnText: 'Mi-am asumat responsabilitatea — Trec la Level 5' },
+      { icon: '🏁', title: 'Licența de apărător', time: '5 minute', points: 10, tpl: 'tpl-5', btnText: 'Misiune îndeplinită ✔' }
+    ];
+
+    let current = 0;
+    const total = levels.length;
+    let score = 0;
+    const awarded = {};
+    const quizAnswered = {};
+
+    const parkItems = [
+      { id: 'p1', text: 'Dreptul la joc și activități recreative', type: 'joc' },
+      { id: 'p2', text: 'Dreptul la un mediu sănătos', type: 'mediu' },
+      { id: 'p3', text: 'Interesul superior al copilului pe primul loc', type: 'interes' }
+    ];
+
+    const boomItems = [
+      { id: 'b1', right: 'Dreptul la opinie', resp: 'Să îți exprimi ideile fără insulte și cu respect.' },
+      { id: 'b2', right: 'Dreptul la joacă', resp: 'Să ai grijă de spațiile de joacă și să incluzi și alți copii.' },
+      { id: 'b3', right: 'Dreptul la educație', resp: 'Să mergi la școală și să nu le strici orele colegilor.' }
+    ];
+
+    function addPoints(key, amount) {
+      if (awarded[key]) return;
+      awarded[key] = true;
+      score += amount;
+      if (score > 100) score = 100;
+      document.getElementById('scoreDisplay').textContent = score;
+    }
+
+    function renderNav() {
+      const nav = document.getElementById('levelsNav');
+      let html = '';
+      for (let i = 0; i < levels.length; i++) {
+        let cls = 'level-dot';
+        if (i === current) cls += ' active';
+        else if (i < current) cls += ' done';
+        html += '<div class="' + cls + '" data-idx="' + i + '">' + (i + 1) + '</div>';
+      }
+      nav.innerHTML = html;
+      nav.querySelectorAll('.level-dot').forEach(dot => {
+        dot.addEventListener('click', function() {
+          current = parseInt(this.getAttribute('data-idx'), 10);
+          renderContent();
+        });
+      });
+    }
+
+    function renderContent() {
+      const lvl = levels[current];
+      const tplEl = document.getElementById(lvl.tpl);
+      const bodyHTML = tplEl ? tplEl.innerHTML : '';
+      document.getElementById('levelContent').innerHTML = `
+        <div class="level-card">
+          <div class="level-header">
+            <div class="level-icon">${lvl.icon}</div>
+            <div>
+              <div class="level-title">Level ${current + 1}: ${lvl.title}</div>
+              <div class="level-time">Timp estimat: ${lvl.time}</div>
+            </div>
+          </div>
+          <div>${bodyHTML}</div>
+        </div>
+      `;
+
+      const pct = Math.round((current / total) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = current + ' din ' + total + ' leveluri completate';
+      document.getElementById('prevBtn').disabled = current === 0;
+      document.getElementById('nextBtn').disabled = false;
+      document.getElementById('nextBtn').innerHTML = current === total - 1 ? 'Misiune îndeplinită ✔' : lvl.btnText;
+
+      renderNav();
+      if (current === 0) initPoll('start', 10);
+      if (current === 1) initConvGrid();
+      if (current === 2) initParkGrid();
+      if (current === 3) initRightMoftQuiz();
+      if (current === 4) initBoomGrid();
+      if (current === 5) initPoll('final', 15);
+    }
+
+    function initPoll(pollId, points) {
+      const selector = '[data-poll="' + pollId + '"]';
+      const btns = document.querySelectorAll(selector);
+      btns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const val = this.getAttribute('data-val');
+          btns.forEach(b => b.classList.remove('selected', 'selected-warn'));
+          if (val === 'b' || val === 'c') this.classList.add('selected');
+          else this.classList.add('selected-warn');
+          document.querySelectorAll('[id^="poll' + pollId + '-fb-"]').forEach(fb => fb.style.display = 'none');
+          const fb = document.getElementById('poll' + pollId + '-fb-' + val);
+          if (fb) fb.style.display = 'block';
+          addPoints('poll-' + pollId, points);
+        });
+      });
+    }
+
+    function initConvGrid() {
+      const cells = document.querySelectorAll('#convGrid .grid-cell');
+      const fb = document.getElementById('convFeedback');
+      cells.forEach(cell => {
+        cell.addEventListener('click', function() {
+          cells.forEach(c => c.classList.remove('selected'));
+          this.classList.add('selected');
+          const correct = this.getAttribute('data-correct') === 'true';
+          fb.style.display = 'block';
+          if (correct) {
+            fb.className = 'feedback-box feedback-correct';
+            fb.textContent = 'Bravo! Ai înțeles esențialul: Convenția protejează toți copiii și creează obligații reale pentru state.';
+            addPoints('conv', 20);
+          } else {
+            fb.className = 'feedback-box feedback-neutral';
+            fb.textContent = 'Mai gândește-te: Convenția nu este un simplu „sfat”, ci un acord pe care statele trebuie să îl respecte.';
+          }
+        });
+      });
+    }
+
+    function initParkGrid() {
+      const grid = document.getElementById('parkGrid');
+      if (!grid) return;
+      grid.innerHTML = parkItems.map(item => `
+        <div>
+          <div class="grid-label">${item.text}</div>
+          <div class="pill-row">
+            <span class="pill" data-type="joc" data-id="${item.id}">Drept la joc</span>
+            <span class="pill" data-type="mediu" data-id="${item.id}">Drept la mediu sănătos</span>
+            <span class="pill" data-type="interes" data-id="${item.id}">Interesul superior al copilului</span>
+          </div>
+        </div>
+      `).join('');
+      const fb = document.getElementById('parkFeedback');
+      const pills = document.querySelectorAll('#parkGrid .pill');
+      pills.forEach(p => {
+        p.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          const type = this.getAttribute('data-type');
+          const siblings = document.querySelectorAll('#parkGrid .pill[data-id="' + id + '"]');
+          siblings.forEach(s => s.classList.remove('selected'));
+          this.classList.add('selected');
+          const item = parkItems.find(it => it.id === id);
+          fb.style.display = 'block';
+          if (item && item.type === type) {
+            fb.className = 'feedback-box feedback-correct';
+            fb.textContent = 'Super! Ai legat corect argumentele copiilor de drepturile lor din Convenția ONU.';
+            addPoints('park', 25);
+          } else {
+            fb.className = 'feedback-box feedback-neutral';
+            fb.textContent = 'Gândește-te ce drept este, de fapt, apărat: este vorba de joc, de mediu sau de interesul superior al copilului?';
+          }
+        });
+      });
+    }
+
+    function initRightMoftQuiz() {
+      const correct = { q1: 'drept', q2: 'moft', q3: 'drept' };
+      document.querySelectorAll('.quiz-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const q = this.getAttribute('data-q');
+          if (quizAnswered[q]) return;
+          quizAnswered[q] = true;
+          const answer = this.getAttribute('data-answer');
+          const expected = correct[q];
+          document.querySelectorAll('[data-q="' + q + '"]').forEach(b => b.disabled = true);
+          const fb = document.getElementById('fb-' + q);
+          if (answer === expected) {
+            this.classList.add('correct');
+            fb.textContent = '✔ Corect! Ai diferențiat bine între nevoie vitală și dorință.';
+            fb.className = 'quiz-feedback ok';
+            addPoints('quiz-' + q, 5);
+          } else {
+            this.classList.add('wrong');
+            const correctBtn = document.querySelector('[data-q="' + q + '"][data-answer="' + expected + '"]');
+            if (correctBtn) correctBtn.classList.add('correct');
+            fb.textContent = '✘ Reia ideea: fără ce nu ai putea crește sănătos și protejat?';
+            fb.className = 'quiz-feedback nok';
+          }
+          if (Object.keys(quizAnswered).length === 3) {
+            const finalFb = document.getElementById('quiz-final-fb');
+            finalFb.style.display = 'block';
+            finalFb.textContent = '🎉 Bravo! Nu mai confunzi drepturile cu mofturile – un pas uriaș pentru credibilitatea ta.';
+            addPoints('quiz-all', 10);
+          }
+        });
+      });
+    }
+
+    function initBoomGrid() {
+      const grid = document.getElementById('boomGrid');
+      if (!grid) return;
+      grid.innerHTML = boomItems.map(item => `
+        <div>
+          <div class="grid-label"><strong>${item.right}</strong></div>
+          <button class="grid-cell" data-id="${item.id}">${item.resp}</button>
+        </div>
+      `).join('');
+      const fb = document.getElementById('boomFeedback');
+      const cells = document.querySelectorAll('#boomGrid .grid-cell');
+      cells.forEach(cell => {
+        cell.addEventListener('click', function() {
+          cells.forEach(c => c.classList.remove('selected'));
+          this.classList.add('selected');
+          fb.style.display = 'block';
+          fb.className = 'feedback-box feedback-correct';
+          fb.textContent = 'Ți-ai activat bumerangul responsabilității: vezi clar că fiecare drept vine cu o datorie față de ceilalți. +20 puncte';
+          addPoints('boom', 20);
+        });
+      });
+    }
+
+    function navigate(dir) {
+      if (dir === 1 && current === total - 1) {
+        document.getElementById('nextBtn').innerHTML = 'Completat! ✔';
+        document.getElementById('nextBtn').disabled = true;
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressLabel').textContent = total + ' din ' + total + ' leveluri completate';
+        renderNav();
+        return;
+      }
+      let next = current + dir;
+      if (next < 0) next = 0;
+      if (next >= total) next = current;
+      current = next;
+      renderContent();
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
+    document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
+
+    renderContent();
+  </script>
+</body>
+</html>
