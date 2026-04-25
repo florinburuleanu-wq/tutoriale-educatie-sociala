@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial 3 - Capcana Iluziilor: Fapte vs. Opinii</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(254, 202, 202, 0.55), transparent 40%),
+        radial-gradient(circle at bottom right, rgba(248, 113, 113, 0.32), transparent 36%),
+        #fef2f2;
+      padding: 1.5rem;
+      color: #7f1d1d;
+    }
+    .container { max-width: 700px; margin: 0 auto; }
+    .hero {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 45%, #b91c1c 100%);
+      padding: 2rem 1.5rem 1.5rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 42px rgba(127, 29, 29, 0.52);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -45px;
+      right: -40px;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.16);
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -30px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(254, 202, 202,0.7) 0%, rgba(254,202,202,0.06) 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      color: #fee2e2;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero h1 {
+      color: #fef2f2;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero p {
+      color: #fee2e2;
+      font-size: 13px;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta span {
+      color: #fecaca;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .progress-bar-outer {
+      background: rgba(255,255,255,0.3);
+      border-radius: 10px;
+      height: 7px;
+      margin-top: 14px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #f97316 0%, #fde68a 50%, #22c55e 100%);
+      width: 0;
+      transition: width 0.6s ease;
+    }
+    .progress-label {
+      color: #fee2e2;
+      font-size: 11px;
+      margin-top: 5px;
+      position: relative;
+      z-index: 1;
+    }
+    .score-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, #fef2f2 0%, #fee2e2 70%, #fecaca 100%);
+      border: 1px solid #fecaca;
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 1rem;
+      font-size: 13px;
+      color: #b91c1c;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(248, 113, 113, 0.32);
+    }
+    .levels-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 1.25rem;
+      scrollbar-width: none;
+    }
+    .levels-nav::-webkit-scrollbar { display: none; }
+    .level-dot {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid #fecaca;
+      background: #fefce8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b91c1c;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(248, 113, 113, 0.32);
+    }
+    .level-dot.active {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border-color: #b91c1c;
+      color: #fef2f2;
+      transform: translateY(-1px);
+    }
+    .level-dot.done {
+      background: #f97316;
+      border-color: #f97316;
+      color: #7f1d1d;
+    }
+    .level-card {
+      background: rgba(255,255,255,0.97);
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 1.3rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 18px 36px rgba(127, 29, 29, 0.26);
+      backdrop-filter: blur(4px);
+    }
+    .level-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .level-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fee2e2 0%, #fefce8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 700;
+      color: #b91c1c;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .level-title { font-size: 15px; font-weight: 700; color: #111827; }
+    .level-time { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .level-body { font-size: 14px; color: #374151; line-height: 1.75; }
+    .level-body strong { font-weight: 700; color: #111827; }
+    .callout {
+      border-left: 4px solid #ef4444;
+      background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 14px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #b91c1c;
+      line-height: 1.6;
+    }
+    .callout-amber {
+      border-left-color: #f97316;
+      background: linear-gradient(180deg, #fffbeb 0%, #fed7aa 100%);
+      color: #92400e;
+    }
+    .activity-box {
+      background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 40%, #e0f2fe 100%);
+      border: 1.5px solid #fecaca;
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
+      margin: 14px 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+    }
+    .activity-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #b91c1c;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .activity-question {
+      font-size: 14px;
+      color: #111827;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .pill {
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(239, 68, 68, 0.08);
+      color: #b91c1c;
+      border: 1px dashed rgba(185, 28, 28, 0.55);
+    }
+    .two-col { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 8px; }
+    .fact-box, .opinion-box {
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      background: #ffffff;
+      font-size: 13px;
+    }
+    .fact-box strong { color: #166534; }
+    .opinion-box strong { color: #b91c1c; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; }
+    .badge-fact { background:#dcfce7; color:#166534; }
+    .badge-opinion { background:#fee2e2; color:#b91c1c; }
+    .poll-options { display: flex; flex-direction: column; gap: 8px; }
+    .poll-option,
+    .quiz-btn,
+    .tag,
+    .timeline-cell {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1.5px solid #e5e7eb;
+      background: #ffffff;
+      font-size: 13px;
+      color: #1f2933;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .poll-option:hover,
+    .quiz-btn:hover,
+    .tag:hover,
+    .timeline-cell:hover {
+      border-color: #ef4444;
+      background: #fee2e2;
+      color: #7f1d1d;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(248, 113, 113, 0.28);
+    }
+    .poll-option.selected,
+    .tag.selected,
+    .timeline-cell.selected {
+      border-color: #ef4444;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #fef2f2;
+    }
+    .poll-option.selected-amber { border-color: #f97316; background: #f97316; color: #fffbeb; }
+    .feedback-box {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      display: none;
+    }
+    .feedback-correct { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
+    .feedback-wrong { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .feedback-neutral { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .quiz-item { margin-bottom: 16px; }
+    .quiz-statement { font-size: 14px; color: #111827; font-weight: 700; margin-bottom: 8px; line-height: 1.5; }
+    .quiz-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .quiz-btn.correct { background: #22c55e; border-color: #22c55e; color: #ecfdf5; }
+    .quiz-btn.wrong { background: #ef4444; border-color: #ef4444; color: #fef2f2; }
+    .quiz-btn:disabled { cursor: default; opacity: 0.8; }
+    .quiz-feedback { font-size: 12px; margin-top: 5px; min-height: 16px; }
+    .quiz-feedback.ok { color: #166534; }
+    .quiz-feedback.nok { color: #b91c1c; }
+    .tag-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+    .timeline-grid { display:grid; grid-template-columns: 1fr; gap:8px; margin-top:8px; }
+    .timeline-label { font-size:12px; color:#6b7280; margin-bottom:4px; }
+    .nav-btns { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; gap: 10px; }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn:hover { opacity: 0.96; transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #fef2f2;
+      box-shadow: 0 10px 18px rgba(248, 113, 113, 0.45);
+    }
+    .btn-outline {
+      background: rgba(255,255,255,0.95);
+      color: #b91c1c;
+      border: 1px solid #e5e7eb;
+    }
+    .btn-outline:hover { background: #fefce8; }
+    .btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+    @media (max-width: 640px) {
+      body { padding: 1rem; }
+      .two-col { grid-template-columns: 1fr; }
+      .nav-btns { flex-direction: column; }
+      .nav-btns .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-badge">Tutorialul 3</div>
+      <h1>🚀 Capcana Iluziilor – Fapte vs. Opinii. Ai dreptul să fii auzit!</h1>
+      <p>Modulul: <em>Argumentarea unui punct de vedere personal (Fapte și opinii)</em>. Timpul în care vei învăța să îți activezi „radarul” minții și să scanezi realitatea!</p>
+      <div class="hero-meta">
+        <span>⏱ 50 de minute</span>
+        <span>⭐ 6 leveluri</span>
+        <span>❤️ temă vizuală roșie</span>
+      </div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+      <div class="progress-label" id="progressLabel">0 din 6 leveluri completate</div>
+    </div>
+
+    <div class="score-bar">🏆 Puncte din activități: <span id="scoreDisplay">0</span>/100</div>
+    <div class="levels-nav" id="levelsNav"></div>
+    <div id="levelContent"></div>
+
+    <div class="nav-btns">
+      <button class="btn btn-outline" id="prevBtn" disabled>&larr; Înapoi</button>
+      <button class="btn btn-primary" id="nextBtn">Înainte &rarr;</button>
+    </div>
+  </div>
+
+  <div id="all-templates" style="display:none;">
+    <div id="tpl-0">
+      <p class="level-body">Salut și bine ai revenit pe <strong>Puterea vocii tale</strong>! 🌍 Sloganul nostru este la fel de puternic: <strong>Gândește liber, Vorbește pentru toți, Schimbă lumea!</strong></p>
+      <p class="level-body" style="margin-top:10px;">În primele două tutoriale ai aflat că ai dreptul de a pune întrebări și de a te informa. Astăzi facem următorul pas: <strong>dreptul tău la opinie</strong>. Dar, înainte de a ieși în față pentru a-ți striga părerea, trebuie să știi un secret pe care mulți adulți nu îl cunosc. Zilnic ești bombardat cu mii de fraze (la televizor, pe TikTok, în clasă). Dacă nu știi să le filtrezi, vei fi foarte ușor de manipulat.</p>
+      <p class="level-body" style="margin-top:10px;">Ești gata să îți activezi „radarul” minții și să înveți diferența uriașă dintre realitate și simpla părere? Hai să dăm <strong>Play</strong>! ▶️</p>
+      <div class="activity-box">
+        <div class="activity-title">🎯 Întrebare de pornire</div>
+        <div class="activity-question">Când auzi o afirmație puternică (la TV, online, în clasă), ce faci de obicei?</div>
+        <div class="poll-options" id="pollStart">
+          <button class="poll-option" data-poll="start" data-val="a">O cred imediat, mai ales dacă sună dramatic sau este spusă de cineva popular.</button>
+          <button class="poll-option" data-poll="start" data-val="b">O cred doar dacă se potrivește cu ce credeam deja.</button>
+          <button class="poll-option" data-poll="start" data-val="c">Încep să mă întreb: „Este fapt sau doar opinie?” și caut dovezi.</button>
+        </div>
+        <div class="feedback-box feedback-wrong" id="pollstart-fb-a">Exact așa funcționează capcana iluziilor! După acest tutorial, vei avea instrumente să nu mai „înghiți” orice mesaj.</div>
+        <div class="feedback-box feedback-neutral" id="pollstart-fb-b">Este un pas, dar încă nu e suficient. E important să verificăm și ce NU se potrivește cu ce credeam noi.</div>
+        <div class="feedback-box feedback-correct" id="pollstart-fb-c">Perfect! Asta înseamnă gândire critică: să-ți activezi radarul și să cauți faptele din spatele opiniilor.</div>
+      </div>
+    </div>
+
+    <div id="tpl-1">
+      <p class="level-body"><strong>🟢 LEVEL 1: Ai dreptul la opinie! (Nu e doar o favoare)</strong></p>
+      <p class="level-body" style="margin-top:8px;">Poate ai auzit uneori adulți spunând: <em>„Ești prea mic ca să îți dai cu părerea!”</em> sau <em>„Când o să crești, atunci să vorbești!”</em>.</p>
+      <p class="level-body" style="margin-top:8px;">Ei bine, avem o veste pentru tine: <strong>Ai dreptul legal la opinie!</strong> Convenția ONU cu privire la Drepturile Copilului spune clar că orice copil capabil de discernământ are dreptul de a-și exprima liber opiniile asupra oricărei probleme care îl privește, iar opiniile sale trebuie luate în considerare.</p>
+      <p class="level-body" style="margin-top:8px;">Dar atenție! Pentru ca opinia ta să fie luată în serios și respectată, ea trebuie să fie susținută de ceva solid. Și aici intervin <strong>faptele</strong>.</p>
+      <div class="activity-box">
+        <div class="activity-title">📌 Mini-check: Îți este respectat dreptul?</div>
+        <div class="activity-question">Bifează situațiile în care dreptul tău la opinie este respectat.</div>
+        <div class="tag-row" id="rightsTags">
+          <button class="tag" data-id="t1" data-correct="true">Profesorul îți cere părerea înainte de a stabili regulile clasei.</button>
+          <button class="tag" data-id="t2" data-correct="false">Ți se spune: „Nu ai voie să vorbești, pentru că ești copil”.</button>
+          <button class="tag" data-id="t3" data-correct="true">Părinții îți ascultă argumentele când discutați despre programul tău zilnic.</button>
+          <button class="tag" data-id="t4" data-correct="false">Grupul de prieteni râde de orice idee spui, fără să te lase să termini.</button>
+        </div>
+        <div class="feedback-box" id="rightsFeedback"></div>
+      </div>
+    </div>
+
+    <div id="tpl-2">
+      <p class="level-body"><strong>🟢 LEVEL 2: Filtrul Magic – FAPT vs. OPINIE</strong></p>
+      <p class="level-body" style="margin-top:8px;">Pentru a nu te lăsa păcălit în nicio discuție, creierul tău trebuie să împartă tot ce aude în două foldere separate:</p>
+      <div class="two-col">
+        <div class="fact-box">
+          <span class="badge badge-fact">FAPT</span>
+          <p class="level-body" style="margin-top:6px;">Un fapt este un eveniment, o acțiune sau o informație care poate fi demonstrată, măsurată sau verificată. Nu contează dacă îți place sau nu, <strong>faptele rămân aceleași pentru toată lumea</strong>.</p>
+          <p class="level-body" style="margin-top:6px;">Exemple de fapte: „Ora de curs durează 50 de minute.” / „Consumul excesiv de zahăr dăunează sănătății.” / „Afară plouă.”</p>
+        </div>
+        <div class="opinion-box">
+          <span class="badge badge-opinion">OPINIE</span>
+          <p class="level-body" style="margin-top:6px;">O opinie reprezintă ceea ce crezi, simți sau judeci tu despre un anumit fapt. Nu poate fi măsurată cu rigla. Este strict punctul tău de vedere. <strong>Oamenii pot avea opinii total diferite</strong> față de același fapt!</p>
+          <p class="level-body" style="margin-top:6px;">Exemple de opinii: „Matematica este cea mai grea materie.” / „Cea mai bună băutură este limonada.” / „Ploaia este deprimantă.”</p>
+        </div>
+      </div>
+      <div class="callout-amber callout" style="margin-top:10px;">
+        <strong>Regula de aur a liderilor:</strong> Niciodată nu transforma o opinie personală într-un fapt absolut! Când cineva îți spune „Jocul ăsta video e o pierdere de timp!”, amintește-ți că aceea este doar opinia lui, nu un fapt verificabil.
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">🧪 Test fulger: FAPT sau OPINIE?</div>
+        <div class="activity-question">Pentru fiecare afirmație, alege dacă este FAPT sau OPINIE.</div>
+        <div class="quiz-item">
+          <div class="quiz-statement">1. „Consumul excesiv de zahăr dăunează sănătății.”</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q1" data-answer="fact">FAPT</button>
+            <button class="quiz-btn" data-q="q1" data-answer="opinion">OPINIE</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q1"></div>
+        </div>
+        <div class="quiz-item">
+          <div class="quiz-statement">2. „Matematica este cea mai grea materie.”</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q2" data-answer="fact">FAPT</button>
+            <button class="quiz-btn" data-q="q2" data-answer="opinion">OPINIE</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q2"></div>
+        </div>
+        <div class="quiz-item">
+          <div class="quiz-statement">3. „Ora de curs durează 50 de minute.”</div>
+          <div class="quiz-btns">
+            <button class="quiz-btn" data-q="q3" data-answer="fact">FAPT</button>
+            <button class="quiz-btn" data-q="q3" data-answer="opinion">OPINIE</button>
+          </div>
+          <div class="quiz-feedback" id="fb-q3"></div>
+        </div>
+        <div class="feedback-box feedback-correct" id="quiz-final-fb" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div id="tpl-3">
+      <p class="level-body"><strong>🟢 LEVEL 3: Misiunea ta de Detectiv – Cazul „Revoluția din Cantină”</strong></p>
+      <p class="level-body" style="margin-top:8px;">📌 Cazul de investigat: Luni dimineața, directorul școlii anunță la microfon o decizie nouă: <em>„Începând de astăzi, automatele cu sucuri acidulate și dulciuri din școală vor fi înlocuite exclusiv cu fructe proaspete, sticle cu apă și sandvișuri cu cereale integrale.”</em></p>
+      <p class="level-body" style="margin-top:8px;">În pauza mare, pe hol se iscă o dezbatere aprinsă între doi colegi din clasa a V-a:</p>
+      <div class="callout">
+        <p class="level-body"><strong>😡 Călin strigă nemulțumit:</strong> „E cea mai groaznică decizie din istoria școlii! Mâncarea sănătoasă nu are niciun gust și toată lumea urăște fructele. Directorul vrea doar să ne facă pauzele plictisitoare!”</p>
+      </div>
+      <div class="callout">
+        <p class="level-body"><strong>🧐 Aura îi răspunde calmă:</strong> „Nu sunt de acord. Este adevărat că mie îmi lipsește ciocolata de la aparat, dar zahărul procesat consumat zilnic dăunează sănătății noastre, cum ne-a arătat profa de biologie. Părerea mea este că, deși ne va fi greu la început, fructele ne vor da mai multă energie pe termen lung.”</p>
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">🕵️ Detectivează: Fapt sau opinie?</div>
+        <div class="activity-question">Trage etichetele „FAPT” și „OPINIE” peste afirmațiile potrivite.</div>
+        <div class="timeline-grid" id="caseGrid"></div>
+        <div class="feedback-box" id="caseFeedback"></div>
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">💬 Reflecție – Gândește liber</div>
+        <p class="level-body">Identifică în discursul lui Călin o opinie pe care el încearcă să o prezinte drept un fapt. (Indiciu: „Toată lumea urăște fructele” – oare este demonstrabil că 100% din planetă urăște fructele? Nu, e doar opinia/exagerarea lui).</p>
+        <p class="level-body" style="margin-top:8px;">Ce fapt demonstrabil a folosit Aura pentru a-și susține opinia? (Indiciu: Faptul că zahărul procesat dăunează sănătății).</p>
+        <p class="level-body" style="margin-top:8px;">De ce mesajul Aurei este mult mai greu de contrazis decât cel al lui Călin?</p>
+      </div>
+    </div>
+
+    <div id="tpl-4">
+      <p class="level-body"><strong>🚀 LEVEL 4: CHALLENGE-UL SĂPTĂMÂNII (Radarul tău on-line)</strong></p>
+      <p class="level-body" style="margin-top:8px;">Ai înțeles teoria, acum o testăm în lumea reală! Dacă vrei să schimbi lumea, trebuie să știi să citești printre rândurile postărilor de pe rețelele sociale.</p>
+      <p class="level-body" style="margin-top:8px;"><strong>📱 CHALLENGE: „Vânătorul de Opinii”</strong></p>
+      <p class="level-body" style="margin-top:8px;">Misiunea ta:</p>
+      <ul class="level-body" style="padding-left:1.1rem; margin-top:4px;">
+        <li>Alege un videoclip sau un articol care dezbate un subiect popular (ex: o lansare de telefon, un meci de fotbal, un nou trend).</li>
+        <li>Scanează cu atenție discursul creatorului de conținut.</li>
+        <li>Extrage în Jurnalul tău de Lider: <strong>un FAPT</strong> rostit în acel clip (ceva ce ai putea verifica pe loc pe Google) și <strong>o OPINIE</strong> personală a creatorului (o preferință, o exagerare sau o judecată proprie).</li>
+      </ul>
+      <p class="level-body" style="margin-top:8px;">Data viitoare când cineva vrea să te convingă de o idee absurdă, folosește scutul tău nou: „Acesta este un fapt demonstrat sau este doar opinia ta?”</p>
+      <p class="level-body" style="margin-top:8px;">Să ai o opinie este dreptul tău. Să o construiești pe fapte reale este <strong>superputerea ta</strong>! Gândește liber. Vorbește pentru toți. Schimbă lumea.</p>
+    </div>
+
+    <div id="tpl-5">
+      <p class="level-body"><strong>📝 LEVEL 5 & 6: Misiunea practică extinsă</strong></p>
+      <p class="level-body" style="margin-top:8px;">Pentru a închide cercul, vei folosi tot ce ai învățat pentru a construi o opinie puternică, bazată pe fapte.</p>
+      <div class="activity-box">
+        <div class="activity-title">✍️ Atelier: Scrie-ți opinia ca un lider</div>
+        <div class="activity-question">Alege una dintre afirmațiile de mai jos și transform-o într-o opinie argumentată cu FAPTE.</div>
+        <ul class="level-body" style="padding-left:1.1rem; margin-top:4px;">
+          <li>„Elevii ar trebui să aibă mai puține teme pentru acasă.”</li>
+          <li>„Telefonul la școală este o problemă serioasă.”</li>
+          <li>„Pauzele ar trebui organizate altfel pentru a ne odihni mai bine.”</li>
+        </ul>
+        <p class="level-body" style="margin-top:8px;">În caietul tău, scrie:</p>
+        <ul class="level-body" style="padding-left:1.1rem; margin-top:4px;">
+          <li><strong>1 fapt</strong> legat de situație (ce poți observa sau verifica).</li>
+          <li><strong>1-2 opinii</strong> ale tale, formulate clar și respectuos.</li>
+          <li>O propoziție finală de tip: „Părerea mea este că..., deoarece...”.</li>
+        </ul>
+      </div>
+      <div class="activity-box">
+        <div class="activity-title">🎯 Micro-quiz de încheiere</div>
+        <div class="activity-question">Ce te ajută cel mai mult să nu cazi în „Capcana Iluziilor”?</div>
+        <div class="poll-options" id="pollFinal">
+          <button class="poll-option" data-poll="final" data-val="a">Să accepți orice afirmație, dacă este spusă cu încredere.</button>
+          <button class="poll-option" data-poll="final" data-val="b">Să întrebi mereu: „Este acesta un fapt verificabil sau doar o opinie?” și să cauți dovezi.</button>
+          <button class="poll-option" data-poll="final" data-val="c">Să crezi doar afirmațiile care îți confirmă ce gândeai deja.</button>
+        </div>
+        <div class="feedback-box feedback-wrong" id="pollfinal-fb-a">Tocmai asta te face ușor de manipulat. Tonul sigur nu transformă o opinie în fapt.</div>
+        <div class="feedback-box feedback-correct" id="pollfinal-fb-b">Exact! Radarul tău critic începe cu această întrebare simplă și cu verificarea faptelor.</div>
+        <div class="feedback-box feedback-neutral" id="pollfinal-fb-c">Este normal să îți placă ce îți confirmă ideile, dar liderii adevărați verifică și informațiile care contrazic ce credeau înainte.</div>
+      </div>
+      <div class="callout" style="margin-top:10px;">
+        <strong>Felicitări!</strong> Ai învățat să deosebești faptele de opinii și să îți folosești vocea într-un mod responsabil. Radarul tău critic tocmai a fost activat!<br>
+        <strong>Gândește liber, Vorbește pentru toți, Schimbă lumea! 🌍</strong>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const levels = [
+      { icon: '🧠', title: 'Activează-ți radarul', time: '8 minute', points: 10, tpl: 'tpl-0', btnText: 'Radar activat — Trec la Level 1' },
+      { icon: '📢', title: 'Dreptul la opinie', time: '10 minute', points: 20, tpl: 'tpl-1', btnText: 'Mi-am revendicat dreptul — Trec la Level 2' },
+      { icon: '⚖️', title: 'Filtrul FAPT vs. OPINIE', time: '10 minute', points: 25, tpl: 'tpl-2', btnText: 'Stăpânesc filtrul — Trec la Level 3' },
+      { icon: '🕵️', title: 'Revoluția din Cantină', time: '12 minute', points: 25, tpl: 'tpl-3', btnText: 'Am rezolvat cazul — Trec la Level 4' },
+      { icon: '📱', title: 'Radarul tău online', time: '5 minute', points: 0, tpl: 'tpl-4', btnText: 'Am vânat opinii — Trec la Level 5' },
+      { icon: '🏁', title: 'Scrie-ți opinia ca lider', time: '5 minute', points: 20, tpl: 'tpl-5', btnText: 'Misiune îndeplinită ✔' }
+    ];
+
+    let current = 0;
+    const total = levels.length;
+    let score = 0;
+    const awarded = {};
+    const quizAnswered = {};
+
+    const rightsTags = ['t1','t3'];
+
+    const caseItems = [
+      { id: 'c1', text: '„Toată lumea urăște fructele.”', type: 'opinion' },
+      { id: 'c2', text: '„Zahărul procesat consumat zilnic dăunează sănătății noastre.”', type: 'fact' },
+      { id: 'c3', text: '„Este cea mai groaznică decizie din istoria școlii.”', type: 'opinion' },
+      { id: 'c4', text: '„Fructele ne vor da mai multă energie pe termen lung.”', type: 'opinion' }
+    ];
+
+    function addPoints(key, amount) {
+      if (awarded[key]) return;
+      awarded[key] = true;
+      score += amount;
+      if (score > 100) score = 100;
+      document.getElementById('scoreDisplay').textContent = score;
+    }
+
+    function renderNav() {
+      const nav = document.getElementById('levelsNav');
+      let html = '';
+      for (let i = 0; i < levels.length; i++) {
+        let cls = 'level-dot';
+        if (i === current) cls += ' active';
+        else if (i < current) cls += ' done';
+        html += '<div class="' + cls + '" data-idx="' + i + '">' + (i + 1) + '</div>';
+      }
+      nav.innerHTML = html;
+      nav.querySelectorAll('.level-dot').forEach(dot => {
+        dot.addEventListener('click', function() {
+          current = parseInt(this.getAttribute('data-idx'), 10);
+          renderContent();
+        });
+      });
+    }
+
+    function renderContent() {
+      const lvl = levels[current];
+      const tplEl = document.getElementById(lvl.tpl);
+      const bodyHTML = tplEl ? tplEl.innerHTML : '';
+      document.getElementById('levelContent').innerHTML = `
+        <div class="level-card">
+          <div class="level-header">
+            <div class="level-icon">${lvl.icon}</div>
+            <div>
+              <div class="level-title">Level ${current + 1}: ${lvl.title}</div>
+              <div class="level-time">Timp estimat: ${lvl.time}</div>
+            </div>
+          </div>
+          <div>${bodyHTML}</div>
+        </div>
+      `;
+
+      const pct = Math.round((current / total) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = current + ' din ' + total + ' leveluri completate';
+      document.getElementById('prevBtn').disabled = current === 0;
+      document.getElementById('nextBtn').disabled = false;
+      document.getElementById('nextBtn').innerHTML = current === total - 1 ? 'Misiune îndeplinită ✔' : lvl.btnText;
+
+      renderNav();
+      if (current === 0) initPoll('start', 10);
+      if (current === 1) initRights();
+      if (current === 2) initFactOpinionQuiz();
+      if (current === 3) initCase();
+      if (current === 5) initPoll('final', 20);
+    }
+
+    function initPoll(pollId, points) {
+      const selector = '[data-poll="' + pollId + '"]';
+      const btns = document.querySelectorAll(selector);
+      btns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const val = this.getAttribute('data-val');
+          btns.forEach(b => b.classList.remove('selected', 'selected-amber'));
+          if (val === 'b' || val === 'c') this.classList.add('selected');
+          else this.classList.add('selected-amber');
+          document.querySelectorAll('[id^="poll' + pollId + '-fb-"]').forEach(fb => fb.style.display = 'none');
+          const fb = document.getElementById('poll' + pollId + '-fb-' + val);
+          if (fb) fb.style.display = 'block';
+          addPoints('poll-' + pollId, points);
+        });
+      });
+    }
+
+    function initRights() {
+      const feedback = document.getElementById('rightsFeedback');
+      const tags = document.querySelectorAll('#rightsTags .tag');
+      tags.forEach(tag => {
+        tag.addEventListener('click', function() {
+          this.classList.toggle('selected');
+          const selected = Array.from(tags).filter(t => t.classList.contains('selected')).map(t => t.getAttribute('data-id'));
+          const allCorrect = rightsTags.every(id => selected.includes(id));
+          const noExtra = selected.every(id => rightsTags.includes(id));
+          feedback.style.display = 'block';
+          if (allCorrect && noExtra && selected.length === rightsTags.length) {
+            feedback.className = 'feedback-box feedback-correct';
+            feedback.textContent = '🏆 Exact! Situațiile selectate arată că opinia ta este ascultată și luată în serios. +20 puncte';
+            addPoints('rights-all', 20);
+          } else {
+            feedback.className = 'feedback-box feedback-neutral';
+            feedback.textContent = 'Verifică încă o dată: în ce situații este, de fapt, ascultată opinia ta și în care este ignorată?';
+          }
+        });
+      });
+    }
+
+    function initFactOpinionQuiz() {
+      const correct = { q1: 'fact', q2: 'opinion', q3: 'fact' };
+      document.querySelectorAll('.quiz-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const q = this.getAttribute('data-q');
+          if (quizAnswered[q]) return;
+          quizAnswered[q] = true;
+          const answer = this.getAttribute('data-answer');
+          const expected = correct[q];
+          document.querySelectorAll('[data-q="' + q + '"]').forEach(b => b.disabled = true);
+          const fb = document.getElementById('fb-' + q);
+          if (answer === expected) {
+            this.classList.add('correct');
+            fb.textContent = '✔ Corect! Ai folosit bine filtrul FAPT/OPINIE.';
+            fb.className = 'quiz-feedback ok';
+            addPoints('quiz-' + q, 5);
+          } else {
+            this.classList.add('wrong');
+            const correctBtn = document.querySelector('[data-q="' + q + '"][data-answer="' + expected + '"]');
+            if (correctBtn) correctBtn.classList.add('correct');
+            fb.textContent = '✘ Uită-te încă o dată: poate fi măsurată/verificată sau ține de gustul fiecăruia?';
+            fb.className = 'quiz-feedback nok';
+          }
+          if (Object.keys(quizAnswered).length === 3) {
+            const finalFb = document.getElementById('quiz-final-fb');
+            finalFb.style.display = 'block';
+            finalFb.textContent = '🎉 Bravo! Filtrul tău FAPT/OPINIE începe să funcționeze excelent.';
+            addPoints('quiz-all', 10);
+          }
+        });
+      });
+    }
+
+    function initCase() {
+      const grid = document.getElementById('caseGrid');
+      if (!grid) return;
+      grid.innerHTML = caseItems.map(item => `
+        <div class="timeline-cell" data-id="${item.id}">
+          <div class="timeline-label">${item.text}</div>
+          <div class="tag-row">
+            <button class="tag" data-type="fact" data-id="${item.id}">FAPT</button>
+            <button class="tag" data-type="opinion" data-id="${item.id}">OPINIE</button>
+          </div>
+        </div>
+      `).join('');
+
+      const fb = document.getElementById('caseFeedback');
+      document.querySelectorAll('#caseGrid .tag').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          const type = this.getAttribute('data-type');
+          const cell = this.closest('.timeline-cell');
+          cell.setAttribute('data-choice', type);
+          cell.querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
+          this.classList.add('selected');
+        });
+      });
+
+      const checkBtn = document.createElement('button');
+      checkBtn.textContent = 'Verifică răspunsurile';
+      checkBtn.className = 'btn btn-primary';
+      checkBtn.style.marginTop = '10px';
+      checkBtn.style.fontSize = '13px';
+      checkBtn.style.padding = '8px 16px';
+      grid.insertAdjacentElement('afterend', checkBtn);
+
+      checkBtn.addEventListener('click', function() {
+        let correctCount = 0;
+        caseItems.forEach(item => {
+          const cell = document.querySelector('.timeline-cell[data-id="' + item.id + '"]');
+          const choice = cell.getAttribute('data-choice');
+          if (choice === item.type) correctCount++;
+        });
+        fb.style.display = 'block';
+        if (correctCount === caseItems.length) {
+          fb.className = 'feedback-box feedback-correct';
+          fb.textContent = '🏆 Excelent! Ai deconstruit perfect „Revoluția din Cantină” și ai separat faptele de opinii. +25 puncte';
+          addPoints('case-all', 25);
+        } else {
+          fb.className = 'feedback-box feedback-neutral';
+          fb.textContent = correctCount + ' din ' + caseItems.length + ' afirmații etichetate corect. Mai gândește-te: ce poate fi verificat și ce este doar exagerare sau părere?';
+        }
+      });
+    }
+
+    function navigate(dir) {
+      if (dir === 1 && current === total - 1) {
+        document.getElementById('nextBtn').innerHTML = 'Completat! ✔';
+        document.getElementById('nextBtn').disabled = true;
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressLabel').textContent = total + ' din ' + total + ' leveluri completate';
+        renderNav();
+        return;
+      }
+      let next = current + dir;
+      if (next < 0) next = 0;
+      if (next >= total) next = current;
+      current = next;
+      renderContent();
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
+    document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
+
+    renderContent();
+  </script>
+</body>
+</html>
