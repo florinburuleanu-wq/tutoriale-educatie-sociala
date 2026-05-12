@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consultare ROF — C.R.P. | Colegiul Național Gheorghe Șincai</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#222;min-height:100vh}
+.screen{display:none}.screen.active{display:block}
+input,textarea{font-size:14px;color:#222;background:#fff;border:1px solid #ccd;border-radius:8px;padding:8px 12px;width:100%;outline:none;transition:border 0.2s;font-family:inherit}
+input:focus,textarea:focus{border-color:#534AB7}
+button{cursor:pointer;border-radius:8px;border:1px solid #ccd;background:#fff;color:#222;font-size:14px;padding:8px 16px;transition:all 0.2s;font-family:inherit}
+button:hover{background:#f0f0f8}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600}
+.tag-new{background:#FAEEDA;color:#633806}.tag-da{background:#EAF3DE;color:#27500A}
+.tag-nu{background:#FCEBEB;color:#501313}.tag-info{background:#E6F1FB;color:#0C447C}
+.progress-bar{height:5px;background:#dde;border-radius:99px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:#534AB7;border-radius:99px;transition:width 0.4s}
+.art-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;margin-bottom:10px;overflow:hidden;transition:border-color 0.2s}
+.art-card.voted-da{border-color:#639922}.art-card.voted-nu{border-color:#E24B4A}
+.art-header{padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;user-select:none}
+.art-header:hover{background:#fafafa}
+.art-body{padding:0 16px 16px;border-top:1px solid #eee}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+@media(max-width:600px){.two-col{grid-template-columns:1fr}}
+.col-actual{background:#fff5f5;border-top:3px solid #E24B4A;border-radius:8px;padding:12px}
+.col-propus{background:#f0fff4;border-top:3px solid #639922;border-radius:8px;padding:12px}
+.col-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.col-label.actual{color:#A32D2D}.col-label.propus{color:#3B6D11}
+.col-text{font-size:13px;color:#4a5568;line-height:1.7;white-space:pre-line}
+.vote-row{display:flex;gap:8px;margin:12px 0}
+.btn-vote{flex:1;padding:10px;font-size:13px;font-weight:600;transition:all 0.2s;border-radius:8px}
+.btn-vote.sel-da{background:#EAF3DE;border-color:#639922;color:#27500A;border-width:2px}
+.btn-vote.sel-nu{background:#FCEBEB;border-color:#E24B4A;color:#501313;border-width:2px}
+.stats-box{background:#f7f9fc;border-radius:10px;padding:12px;margin-top:12px}
+.comment-item{border-left:3px solid #AFA9EC;padding:8px 10px;margin-top:6px;border-radius:0 8px 8px 0;background:#fff}
+.header-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 16px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.tab-row{display:flex;gap:4px;background:#f0f4f8;border-radius:10px;padding:4px;margin-bottom:16px}
+.tab-btn{flex:1;padding:9px;border:none;background:transparent;font-size:13px;color:#888;border-radius:7px;font-weight:500}
+.tab-btn.active{background:#fff;color:#222;font-weight:700;border:1px solid #dde;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px}
+.deadline-banner{background:linear-gradient(135deg,#534AB7,#764ba2);color:#fff;padding:10px 16px;text-align:center;font-size:13px;font-weight:600}
+.btn-primary{background:#534AB7;border-color:#534AB7;color:#fff;font-weight:600}
+.btn-primary:hover{background:#433A97}
+.btn-danger{background:#E24B4A;border-color:#E24B4A;color:#fff;font-size:12px;padding:5px 10px}
+.btn-edit{background:#E6F1FB;border-color:#185FA5;color:#185FA5;font-size:12px;padding:5px 10px}
+.loading{text-align:center;padding:60px 20px;color:#888;font-size:15px}
+.error-msg{color:#A32D2D;font-size:12px;margin-top:6px}
+.like-btn{background:#f0f4f8;border:1px solid #dde;color:#534AB7;font-size:12px;padding:5px 12px;border-radius:20px;font-weight:600}
+.like-btn.liked{background:#E6F1FB;border-color:#534AB7}
+.info-box{background:#fff9e6;border:1px solid #f0d080;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#7a5c00;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="deadline-banner">⏳ Consultare ROF C.R.P. &nbsp;|&nbsp; <span style="opacity:0.9">Voturile se închid pe <strong>25 mai 2026</strong></span></div>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active" style="min-height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="max-width:400px;width:100%">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:48px;margin-bottom:12px">⚖️</div>
+      <h1 style="font-size:20px;font-weight:700;margin-bottom:6px">Consultare ROF — C.R.P.</h1>
+      <p style="font-size:13px;color:#666">Colegiul Național „Gheorghe Șincai" București</p>
+    </div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:24px;margin-bottom:12px">
+      <label style="font-size:13px;color:#555;display:block;margin-bottom:6px;font-weight:600">Codul tău unic de acces</label>
+      <input id="code-input" placeholder="ex: CRP-9A" style="font-family:monospace;letter-spacing:2px;font-size:16px;margin-bottom:10px" onkeydown="if(event.key==='Enter')doLogin()">
+      <div id="code-error" class="error-msg" style="display:none"></div>
+      <button class="btn-primary" onclick="doLogin()" style="width:100%;padding:11px;margin-top:6px">Intră în platformă →</button>
+    </div>
+    <div style="background:#f7f9fc;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:12px">
+      <p style="font-size:12px;color:#999;margin-bottom:8px;font-weight:600">ADMINISTRARE</p>
+      <div style="display:flex;gap:8px">
+        <input id="admin-input" type="password" placeholder="Parolă admin" onkeydown="if(event.key==='Enter')doAdmin()">
+        <button onclick="doAdmin()" style="white-space:nowrap">Admin →</button>
+      </div>
+      <div id="admin-error" class="error-msg" style="display:none"></div>
+    </div>
+    <div class="info-box">
+      <strong>📋 Instrucțiuni pentru reprezentanți:</strong><br>
+      Introduceți codul unic al clasei (ex: <code style="background:#fff3cd;padding:1px 5px;border-radius:4px">CRP-9A</code>). Veți putea:<br>
+      • Vota fiecare articol al regulamentului<br>
+      • Lăsa comentarii și propuneri de modificare<br>
+      • Propune articole noi<br>
+      • Vedea voturile tuturor în timp real
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="screen-main" class="screen">
+  <div class="header-bar">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <p style="font-size:15px;font-weight:700">Consultare ROF — C.R.P.</p>
+        <p id="header-sub" style="font-size:12px;color:#666"></p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="btn-save-draft" onclick="saveDraft()" style="font-size:12px;padding:6px 12px">💾 Salvează</button>
+        <button onclick="showScreen('login')" style="font-size:12px;padding:6px 12px">← Ieșire</button>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="main-progress" style="width:0%"></div></div>
+  </div>
+  <div id="save-msg" style="background:#EAF3DE;color:#27500A;padding:10px 16px;text-align:center;font-size:13px;font-weight:600;display:none"></div>
+  <div id="loading-main" class="loading">Se încarcă datele... ⏳</div>
+  <div id="main-content" style="display:none;padding:16px">
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-btn-articles" onclick="switchTab('articles')">📋 Articole</button>
+      <button class="tab-btn" id="tab-btn-new" onclick="switchTab('new')">➕ Propuneri noi</button>
+      <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')">📊 Statistici</button>
+    </div>
+    <div id="tab-articles">
+      <div class="info-box"><strong>Cum funcționează:</strong> Citiți textul actual și propunerea nouă pentru fiecare articol. Votați și lăsați comentarii dacă doriți modificări. La final apăsați <strong>Finalizează și trimite</strong>. Puteți salva progresul și reveni oricând.</div>
+      <div id="articles-list"></div>
+      <div id="submit-area" style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;text-align:center;margin-top:8px">
+        <p id="submit-info" style="font-size:13px;color:#666;margin-bottom:14px"></p>
+        <button id="btn-submit" class="btn-primary" onclick="doSubmit()" style="padding:12px 32px;font-size:15px">✅ Finalizează și trimite răspunsurile</button>
+        <p style="font-size:11px;color:#aaa;margin-top:8px">Poți salva progresul și reveni mai târziu cu „💾 Salvează".</p>
+      </div>
+      <div id="submitted-area" style="display:none;background:#EAF3DE;border:2px solid #97C459;border-radius:14px;padding:24px;text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">✅</div>
+        <h3 style="font-size:16px;font-weight:700;color:#27500A;margin-bottom:6px">Răspunsurile tale au fost înregistrate!</h3>
+        <p style="font-size:13px;color:#3B6D11">Mulțumim pentru participare. Poți vedea statisticile în tab-ul „📊 Statistici".</p>
+      </div>
+    </div>
+    <div id="tab-new" style="display:none">
+      <div class="info-box"><strong>Propuneri de articole noi:</strong> Dacă considerați că regulamentul are nevoie de un articol suplimentar, îl puteți propune aici. Propunerea devine vizibilă imediat pentru toți reprezentanții, care o pot susține cu 👍. Puteți edita sau șterge propria propunere oricând.</div>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">➕ Adaugă o propunere de articol nou</h3>
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Titlul articolului propus</label>
+        <input id="new-art-title" placeholder="ex: Art. 16 — Transparența deciziilor C.R.P." style="margin-bottom:10px">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Textul articolului propus</label>
+        <textarea id="new-art-text" rows="4" placeholder="Scrieți aici textul complet al articolului propus..."></textarea>
+        <div id="new-art-error" class="error-msg" style="display:none"></div>
+        <button class="btn-primary" onclick="submitNewArticle()" style="margin-top:10px;padding:9px 20px">Trimite propunerea →</button>
+      </div>
+      <div id="new-articles-list"><div class="loading">Se încarcă propunerile...</div></div>
+    </div>
+    <div id="tab-stats" style="display:none">
+      <div id="stats-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px"></div>
+      <div id="stats-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="screen-admin" class="screen">
+  <div class="header-bar">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <p style="font-size:15px;font-weight:700">🛡️ Panou Admin — ROF C.R.P.</p>
+        <p style="font-size:12px;color:#666">Colegiul Național „Gheorghe Șincai"</p>
+      </div>
+      <button onclick="showScreen('login')" style="font-size:12px;padding:6px 12px">← Ieșire</button>
+    </div>
+  </div>
+  <div id="loading-admin" class="loading">Se încarcă datele... ⏳</div>
+  <div id="admin-content" style="display:none;padding:16px">
+    <div id="admin-overview" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:24px"></div>
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">Răspunsuri pe articole</h2>
+    <div id="admin-articles"></div>
+    <h2 style="font-size:15px;font-weight:700;margin:24px 0 12px">Propuneri articole noi</h2>
+    <div id="admin-new-articles"></div>
+    <h2 style="font-size:15px;font-weight:700;margin:24px 0 12px">Clase înregistrate</h2>
+    <div id="admin-classes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDvlXhBKw3pwHGneNq7olgEc7b4SqjiuqQ",
+  authDomain: "puterea-vocii-tale.firebaseapp.com",
+  projectId: "puterea-vocii-tale",
+  storageBucket: "puterea-vocii-tale.firebasestorage.app",
+  messagingSenderId: "60750339466",
+  appId: "1:60750339466:web:a6bbdf57a3b4273e10fc73"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const ADMIN_PASS = "130629";
+
+const CODES = {
+  "CRP-9A":"Cls. a IX-a A","CRP-9B":"Cls. a IX-a B","CRP-9C":"Cls. a IX-a C","CRP-9D":"Cls. a IX-a D","CRP-9E":"Cls. a IX-a E","CRP-9F":"Cls. a IX-a F","CRP-9G":"Cls. a IX-a G","CRP-9H":"Cls. a IX-a H","CRP-9I":"Cls. a IX-a I",
+  "CRP-10A":"Cls. a X-a A","CRP-10B":"Cls. a X-a B","CRP-10C":"Cls. a X-a C","CRP-10D":"Cls. a X-a D","CRP-10E":"Cls. a X-a E","CRP-10F":"Cls. a X-a F","CRP-10G":"Cls. a X-a G","CRP-10H":"Cls. a X-a H",
+  "CRP-11A":"Cls. a XI-a A","CRP-11B":"Cls. a XI-a B","CRP-11C":"Cls. a XI-a C","CRP-11D":"Cls. a XI-a D","CRP-11E":"Cls. a XI-a E","CRP-11F":"Cls. a XI-a F","CRP-11G":"Cls. a XI-a G","CRP-11H":"Cls. a XI-a H",
+  "CRP-12A":"Cls. a XII-a A","CRP-12B":"Cls. a XII-a B","CRP-12C":"Cls. a XII-a C","CRP-12D":"Cls. a XII-a D","CRP-12E":"Cls. a XII-a E","CRP-12F":"Cls. a XII-a F","CRP-12G":"Cls. a XII-a G","CRP-12H":"Cls. a XII-a H","CRP-12I":"Cls. a XII-a I",
+  "CRP-EX1":"Reprezentant Special 1","CRP-EX2":"Reprezentant Special 2"
+};
+
+const ARTICLES = [
+  {id:"art1",title:"Art. 1 — Constituire și bază legală",isNew:false,
+   actual:"(1) La nivelul Colegiului Național Gheorghe Șincai, din București, sectorul 4, funcționează Consiliul Reprezentativ al Părinților/Reprezentanților legali, denumit în continuare C.R.P.\n(2) C.R.P. se organizează și funcționează în baza prevederilor Legii nr. 198/2023, O.M.E. nr. 5726/2024, ROF al Colegiului și a propriului Regulament.\n(3) C.R.P. este o structură fără personalitate juridică, nu are patrimoniu, nu are buget, nu are dreptul de a colecta cotizații sau donații. Se poate implica prin acțiuni cu caracter logistic-voluntariat.",
+   propus:"(1) La nivelul C.N.G.Ș. din București, funcționează C.R.P.\n(2) C.R.P. se organizează în baza Legii învățământului preuniversitar, R.O.F.U.I.P. și a propriului Regulament.\n(3) C.R.P. este o structură fără personalitate juridică dar care poate avea calitate procesuală în fața instanțelor, nu are patrimoniu, nu are buget, nu colectează cotizații sau donații.\n(4) C.R.P. se poate implica prin acțiuni logistic-voluntariat și prin constituire de comisii cu părinți-specialiști.\n(5) C.R.P. avizează prin dezbatere Regulamentul Intern și ROF ale C.N.G.Ș., la solicitarea managementului."},
+  {id:"art2",title:"Art. 2 — Beneficiarii învățământului",isNew:false,
+   actual:"(1) Beneficiarii secundari sunt părinții/reprezentanții legali ai elevilor.\n(2) Învățământul preuniversitar este centrat pe beneficiari (primari - elevii, secundari - părinții, terțiari – comunitatea).",
+   propus:"(1) Beneficiarii secundari sunt părinții/reprezentanții legali ai elevilor.\n(2) Învățământul preuniversitar este centrat pe beneficiari (primari - elevii, secundari - părinții, terțiari – comunitatea).\n[Articol nemodificat față de versiunea actuală]"},
+  {id:"art3",title:"Art. 3 — Comitetul de părinți pe clasă",isNew:false,
+   actual:"(1) La nivelul fiecărei clase se înființează și funcționează comitetul de părinți.\n(2) Comitetul se alege prin majoritate simplă, la începutul anului școlar.\n(3) Comitetul se compune din 3 persoane: un președinte și 2 membri.\n(4) Președintele reprezintă interesele părinților în relațiile cu C.R.P. și asociația de părinți.\n(5) Președintele constituie, prin aplicații online, grupul părinților clasei.",
+   propus:"(1) La nivelul fiecărei clase se constituie și funcționează comitetul de părinți.\n(2) Comitetul se alege cu majoritate simplă a cel puțin jumătate + 1 din numărul total al părinților, nu mai târziu de 1 octombrie al fiecărui an școlar.\n(3) Comitetul se compune din 3 persoane: 1 președinte și 2 membri (vicepreședinți sau vicepreședinte și secretar)."},
+  {id:"art4",title:"Art. 4 — Recomandări și atribuții președinte comitet",isNew:true,
+   actual:"⚠️ Articol nou — nu există în regulamentul actual.",
+   propus:"(1) Se recomandă ca persoana aleasă președinte să dispună de timpul necesar implicării în activitățile Colegiului.\n(2) Președintele comitetului reprezintă interesele părinților în relațiile cu C.R.P., Asociația de părinți, managementul și cadrele didactice ale C.N.G.Ș., I.S.M.B. și Ministerul Educației.\n(3) Președintele poate ocupa această poziție la cel mult două clase simultan. La vot, dacă cele două clase sunt în conflict de interese, persoana va preciza pentru ce clasă votează și se rezumă la un singur vot."},
+  {id:"art5",title:"Art. 5 — Grupul online al părinților",isNew:false,
+   actual:"Președintele constituie, prin aplicații online (WhatsApp etc.), grupul părinților, distinct de cel al dirigintelui. Grupul se utilizează ca și canal de comunicare între părinții clasei și C.R.P.",
+   propus:"(1) Președintele constituie, după prima adunare generală a părinților clasei, prin aplicații online, grupul părinților.\n(2) Grupul se utilizează ca și canal de comunicare cu C.R.P. și ca modalitate de consultare și informare.\n(3) Comunicarea între cadre didactice și părinți este asigurată de diriginte și președintele comitetului (sau ceilalți 2 membri, în lipsa președintelui)."},
+  {id:"art6",title:"Art. 6 — Revocare și adunare generală părinți",isNew:true,
+   actual:"⚠️ Articol nou — nu există în regulamentul actual.",
+   propus:"(1) Membrii comitetului pot fi revocați/înlocuiți la propunerea părinților sau după înaintarea demisiei pe grupul online sau în ședință.\n(2) Adunarea generală poate fi convocată de președinte sau de ⅓ din părinți și este statutară în prezența a cel puțin ⅓ din totalul părinților clasei.\n(3) Adunarea generală este compusă din totalitatea părinților clasei (2 părinți/elev; 1 în familii monoparentale).\n(4) Membrii aceleiași familii își pot suplini prezența prin delegație/împuternicire semnată."},
+  {id:"art7",title:"Art. 7 — Componența și conducerea C.R.P.",isNew:false,
+   actual:"(1) C.R.P. este compus din președinții comitetelor de părinți.\n(2) La începutul anului școlar are loc adunarea generală a C.R.P. În prima ședință, C.R.P. își desemnează președintele și cei 2 vicepreședinți.\n(3) Atribuții executiv: atragere fonduri; prevenire violență/bullying; suport cluburi elevi; dotare și modernizare; program-pilot; orice altă activitate.",
+   propus:"(1) C.R.P. este compus din președinții comitetelor de părinți.\n(2) La începutul anului școlar are loc Adunarea Generală a C.R.P.\n(3) În prima ședință, dar nu mai târziu de 10 octombrie, C.R.P. își alege președintele și cei 2 vicepreședinți.\n(4) Atribuții executiv: atragere fonduri (prin Asociația de părinți); prevenire violență, bullying, alcool, stupefiante; suport cluburi; dotare; program-pilot; orice altă activitate.\n(5) Președintele poate fi revocat prin votul a cel puțin jumătate plus 1 din membri, la solicitarea unei treimi.\n(6) Vicepreședinții pot fi revocați prin votul a cel puțin o treime din membri, la solicitarea unei treimi."},
+  {id:"art8",title:"Art. 8 — Atribuțiile președintelui C.R.P.",isNew:false,
+   actual:"(1) Președintele reprezintă C.R.P. în relația cu alte persoane. La solicitarea sau în absența sa, atribuțiile pot fi exercitate de vicepreședinți.\n(2) La sfârșitul fiecărui an școlar, președintele prezintă raportul de activitate.",
+   propus:"(1) Președintele reprezintă C.R.P. La solicitarea sa sau în absența sa prelungită, atribuțiile pot fi exercitate de unul dintre vicepreședinți.\n(2) La sfârșitul fiecărui an școlar ori cel târziu la începutul viitorului an, în ședință, președintele prezintă raportul de activitate al C.R.P."},
+  {id:"art9",title:"Art. 9 — Metodologia de lucru",isNew:false,
+   actual:"(1) Metodologia respectă principiul consultării tuturor membrilor și principiul votului majoritar.\n(2) În situații excepționale, executivul C.R.P. poate lua decizii temporare până la consultarea membrilor.",
+   propus:"(1) Metodologia respectă principiul consultării tuturor membrilor și principiul votului majoritar.\n(2) În situații excepționale, executivul C.R.P. (în unanimitate) poate lua decizii temporare, dar nu mai târziu de 20 zile lucrătoare va convoca adunarea generală."},
+  {id:"art10",title:"Art. 10 — Ședințele C.R.P.",isNew:false,
+   actual:"(1) C.R.P. se întrunește ori de câte ori este necesar. Convocarea se face de președinte sau vicepreședinți.\n(2) C.R.P. este statutar în prezența a 2/3 din membri. Hotărârile se adoptă prin vot deschis sau secret la cerere.\n(3) Dacă nu se întrunește cvorumul, ședința se reconvoacă în 7 zile lucrătoare. Absenții pot fi înlocuiți de alți membri ai comitetului, ca observatori fără drept de vot.\n(4) În situații excepționale, ședințele se pot desfășura online.",
+   propus:"(1) C.R.P. se întrunește cu prezență fizică sau online, ori de câte ori este necesar. Convocarea se face de președinte, vicepreședinți sau 1/3 din membri.\n(2) În fiecare an școlar, C.R.P. se întrunește în 3 ședințe ordinare (octombrie, ianuarie, aprilie) plus ședințe extraordinare.\n(3) C.R.P. este statutar în prezența a 2/3 din membri. Hotărârile se adoptă prin vot secret (sau la vedere la cerere).\n(4) Dacă nu se întrunește cvorumul, ședința se reconvoacă în 7 zile, statutară cu jumătate plus 1.\n(5) Dacă nici la a doua convocare nu se întrunește cvorumul, se reconvoacă în 7 zile, statutară cu membrii participanți.\n(6) Absenții pot fi înlocuiți de alți membri ai comitetului.\n(7) Președintele poate invita anumite persoane. Alte persoane nu pot participa.\n(8) În situații excepționale, ședințele se pot desfășura online."},
+  {id:"art11",title:"Art. 11 — Reprezentanți în organisme",isNew:false,
+   actual:"(1) C.R.P. desemnează: 2 rep. în Consiliul de administrație; 2 rep. în Comisia anti-violență; 1 rep. în C.E.A.C.; 1 rep. în Comisia ROF.\n(2) Dacă un reprezentant își pierde calitatea, se convoacă adunarea generală.",
+   propus:"(1) C.R.P. desemnează: 2 rep. în Consiliul de Administrație; 1 rep. în Comisia anti-violență; 1 rep. în C.E.A.C.; 1 rep. în Comisia ROF; rep. în orice comisie la solicitarea scrisă a directorului.\n(2) Președinții de la cls. XII pot reprezenta C.R.P., cu câte un supleant desemnat.\n(3) Dacă un reprezentant demisionează sau se dorește înlocuit, se convoacă adunarea generală."},
+  {id:"art12",title:"Art. 12 — Atribuțiile C.R.P.",isNew:false,
+   actual:"C.R.P. propune discipline prin CDS; sprijină parteneriate; susține anti-absenteism și anti-violență; promovează imaginea colegiului; conservă tradițiile culturale; susține activitățile; susține consultațiile cu părinții; colaborează cu instituții de asistență socială; susține consilierea profesională; propune măsuri de școlarizare; implementează parteneriate; sprijină sănătatea elevilor; îmbunătățește condițiile; susține noi proiecte.",
+   propus:"C.R.P.: propune discipline prin C.D.E.O.S.; susține Colegiul în prevenirea absenteismului, violentei, fumatului, alcoolului, drogurilor; promovează imaginea C.N.G.S.; sprijină organizarea activităților relevante pentru elevi; susține consultațiile cu părinții și asigurarea sănătății elevilor; susține consilierea și orientarea socio-profesională a absolvenților; se implică în implementarea parteneriatelor la solicitarea cadrelor; are inițiative pentru îmbunătățirea condițiilor; susține identificarea și implementarea de noi proiecte."},
+  {id:"art13",title:"Art. 13 — Resurse financiare și colaborare",isNew:false,
+   actual:"(1) C.R.P. poate face demersuri pentru atragerea de resurse financiare (contribuții, donații, sponsorizări), gestionate de unitatea de învățământ.\n(2) C.R.P. colaborează cu Asociația de părinți și structurile asociative la nivel local, județean, regional și național.",
+   propus:"(1) C.R.P. poate face demersuri pentru atragerea de resurse financiare, care vor fi colectate și gestionate de Asociația de părinți din C.N.G.S.\n(2) C.R.P. colaborează cu Asociația de părinți, cu Consiliul Profesoral și Consiliul Elevilor din C.N.G.S. și cu structurile asociative la nivel local, județean, regional și național."},
+  {id:"art14",title:"Art. 14 — Incompatibilități, confidențialitate și sancțiuni",isNew:false,
+   actual:"(1) Funcția de președinte C.R.P. este incompatibilă cu funcția de președinte al Asociației de Părinți.\n(2) Reprezentantul C.R.P. în CA și comisii este incompatibil cu funcția de personal didactic sau consilier local/primar.\n(3) Se recomandă aplicarea incompatibilității și la președinții comitetelor de părinți.",
+   propus:"(1) Funcția de președinte C.R.P. este incompatibilă cu funcția de președinte al Asociației de Părinți.\n(2) Reprezentantul C.R.P. în CA și comisii este incompatibil cu personal didactic, consilier local sau primar/director în primărie.\n(3) NOU: Grupul online C.R.P. are caracter privat. Conversațiile nu pot fi transmise fără acceptul membrilor.\n(4) NOU: Dacă un membru a transmis conversații fără accept, C.R.P. poate avertiza cu mustrare scrisa sau verbala.\n(5) NOU: La 3 mustrări acumulate, C.R.P. poate recomanda schimbarea persoanei din funcție și excluderea din grupul online."},
+  {id:"art15",title:"Art. 15 — Dispoziții finale",isNew:false,
+   actual:"(1) Regulamentul poate fi revizuit la propunerea membrilor, cu majoritate.\n(2) Regulamentul este obligatoriu pentru toți părinții. Președinții comitetelor vor aduce la cunoștința părinților prevederile.\n(3) Aprobat în ședința C.R.P. din 20 noiembrie 2024.",
+   propus:"(1) Regulamentul poate fi revizuit și modificat de cel puțin jumătate plus 1 din membrii C.R.P. în cadrul ședințelor sau prin sondaj pe grupul online.\n(2) Regulamentul este obligatoriu pentru toți membrii C.R.P. Președinții comitetelor vor aduce la cunoștința părinților prevederile.\n(3) Aprobat în ședința C.R.P. din 11 mai 2026."}
+];
+
+let currentCode=null, myVotes={}, myComments={}, isSubmitted=false, expandedArt=null;
+let allResponses={}, newArticles=[], unsubResp=null, unsubNew=null;
+
+window.showScreen = n => {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+};
+
+window.doLogin = async () => {
+  const val = document.getElementById('code-input').value.trim().toUpperCase();
+  const err = document.getElementById('code-error');
+  if (!CODES[val]) { err.textContent='Cod invalid. Verificați codul primit.'; err.style.display='block'; return; }
+  err.style.display='none'; currentCode=val;
+  document.getElementById('loading-main').style.display='block';
+  document.getElementById('main-content').style.display='none';
+  showScreen('main');
+  try {
+    const snap = await getDoc(doc(db,'rof_votes',val));
+    if (snap.exists()) { const d=snap.data(); myVotes=d.votes||{}; myComments=d.comments||{}; isSubmitted=d.submitted||false; }
+    subscribeAll();
+  } catch(e) { console.error(e); }
+};
+
+window.doAdmin = () => {
+  const val = document.getElementById('admin-input').value;
+  const err = document.getElementById('admin-error');
+  if (val!==ADMIN_PASS) { err.textContent='Parolă incorectă.'; err.style.display='block'; return; }
+  err.style.display='none';
+  document.getElementById('loading-admin').style.display='block';
+  document.getElementById('admin-content').style.display='none';
+  showScreen('admin');
+  subscribeAll(true);
+};
+
+function subscribeAll(isAdmin=false) {
+  if (unsubResp) unsubResp();
+  unsubResp = onSnapshot(collection(db,'rof_votes'), snap => {
+    allResponses={};
+    snap.forEach(d=>{ allResponses[d.id]=d.data(); });
+    if (isAdmin) { renderAdmin(); document.getElementById('loading-admin').style.display='none'; document.getElementById('admin-content').style.display='block'; }
+    else { document.getElementById('loading-main').style.display='none'; document.getElementById('main-content').style.display='block'; renderMain(); }
+  });
+  if (unsubNew) unsubNew();
+  unsubNew = onSnapshot(collection(db,'rof_new_articles'), snap => {
+    newArticles=[];
+    snap.forEach(d=>{ newArticles.push({id:d.id,...d.data()}); });
+    newArticles.sort((a,b)=>(b.ts?.seconds||0)-(a.ts?.seconds||0));
+    if (document.getElementById('tab-new')?.style.display!=='none') renderNewArticles();
+    if (isAdmin) renderAdminNewArticles();
+  });
+}
+
+const getStats = artId => {
+  let da=0,nu=0;
+  Object.values(allResponses).forEach(e=>{ if(e.votes?.[artId]==='da') da++; else if(e.votes?.[artId]==='nu') nu++; });
+  return {da,nu,total:da+nu};
+};
+
+const getComments = artId => Object.entries(allResponses)
+  .filter(([,e])=>e.comments?.[artId]?.trim())
+  .map(([code,e])=>({clasa:e.clasa||code,text:e.comments[artId]}));
+
+window.saveDraft = async () => {
+  await setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:serverTimestamp()});
+  showMsg('Progresul a fost salvat. Poți continua mai târziu. ✅');
+};
+
+window.doSubmit = async () => {
+  if (!Object.keys(myVotes).length) return;
+  await setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:true,clasa:CODES[currentCode],ts:serverTimestamp()});
+  isSubmitted=true;
+  document.getElementById('submit-area').style.display='none';
+  document.getElementById('submitted-area').style.display='block';
+  document.getElementById('btn-save-draft').style.display='none';
+  showMsg('Răspunsurile tale au fost înregistrate cu succes! ✅');
+  renderArticles();
+};
+
+const showMsg = text => {
+  const el=document.getElementById('save-msg');
+  el.textContent=text; el.style.display='block';
+  setTimeout(()=>el.style.display='none',4000);
+};
+
+window.switchTab = name => {
+  ['articles','new','stats'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
+    document.getElementById('tab-btn-'+t).className='tab-btn'+(t===name?' active':'');
+  });
+  if (name==='stats') renderStats();
+  if (name==='new') renderNewArticles();
+};
+
+window.toggleArticle = id => { expandedArt=expandedArt===id?null:id; renderArticles(); };
+
+window.voteArticle = (artId,val) => {
+  if (isSubmitted) return;
+  if (myVotes[artId]===val) delete myVotes[artId]; else myVotes[artId]=val;
+  updateProgress(); renderArticles();
+};
+
+window.commentArticle = (artId,val) => { if (!isSubmitted) myComments[artId]=val; };
+
+window.submitNewArticle = async () => {
+  const title=document.getElementById('new-art-title').value.trim();
+  const text=document.getElementById('new-art-text').value.trim();
+  const err=document.getElementById('new-art-error');
+  if (!title) { err.textContent='Vă rugăm să introduceți titlul articolului.'; err.style.display='block'; return; }
+  if (!text) { err.textContent='Vă rugăm să introduceți textul articolului.'; err.style.display='block'; return; }
+  err.style.display='none';
+  await addDoc(collection(db,'rof_new_articles'),{title,text,proposedBy:currentCode,clasa:CODES[currentCode],votes:[],ts:serverTimestamp()});
+  document.getElementById('new-art-title').value='';
+  document.getElementById('new-art-text').value='';
+  showMsg('Propunerea ta a fost trimisă și este vizibilă tuturor! ✅');
+};
+
+window.voteNewArticle = async (docId,currentVotes) => {
+  const already=currentVotes.includes(currentCode);
+  const newV=already?currentVotes.filter(v=>v!==currentCode):[...currentVotes,currentCode];
+  await updateDoc(doc(db,'rof_new_articles',docId),{votes:newV});
+};
+
+window.deleteNewArticle = async docId => {
+  if (confirm('Ești sigur că vrei să ștergi această propunere?')) {
+    await deleteDoc(doc(db,'rof_new_articles',docId));
+    showMsg('Propunerea a fost ștearsă.');
+  }
+};
+
+window.editNewArticle = async (docId,ct,cx) => {
+  const nt=prompt('Editează titlul:',ct); if(nt===null) return;
+  const nx=prompt('Editează textul:',cx); if(nx===null) return;
+  await updateDoc(doc(db,'rof_new_articles',docId),{title:nt.trim(),text:nx.trim()});
+  showMsg('Propunerea a fost actualizată. ✅');
+};
+
+function updateProgress() {
+  const voted=Object.keys(myVotes).length;
+  const pct=Math.round((voted/ARTICLES.length)*100);
+  document.getElementById('main-progress').style.width=pct+'%';
+  document.getElementById('header-sub').textContent=CODES[currentCode]+' · '+(isSubmitted?'✅ Finalizat':voted+'/'+ARTICLES.length+' articole votate');
+  const info=document.getElementById('submit-info');
+  if (info) {
+    const rem=ARTICLES.length-voted;
+    info.innerHTML='Ai votat <strong>'+voted+'</strong> din <strong>'+ARTICLES.length+'</strong> articole.'+(rem>0?' <span style="color:#A32D2D">Mai ai '+rem+' nevotate.</span>':' <span style="color:#3B6D11">Toate articolele votate!</span>');
+  }
+}
+
+function renderMain() {
+  updateProgress(); renderArticles();
+  if (isSubmitted) {
+    document.getElementById('submit-area').style.display='none';
+    document.getElementById('submitted-area').style.display='block';
+    document.getElementById('btn-save-draft').style.display='none';
+  }
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderArticles() {
+  const list=document.getElementById('articles-list');
+  if (!list) return;
+  list.innerHTML=ARTICLES.map((art,idx)=>{
+    const vote=myVotes[art.id], isOpen=expandedArt===art.id;
+    const stats=getStats(art.id), comments=getComments(art.id);
+    const cardClass='art-card'+(vote==='da'?' voted-da':vote==='nu'?' voted-nu':'');
+    let body='';
+    if (isOpen) {
+      const pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
+      const btnDa='btn-vote'+(vote==='da'?' sel-da':''), btnNu='btn-vote'+(vote==='nu'?' sel-nu':'');
+      const dis=isSubmitted?'disabled style="background:#f9f9f9"':'';
+      const myC=esc(myComments[art.id]||'');
+      const commHtml=comments.length>0?comments.map(c=>'<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+'</span><p style="font-size:12px;color:#555;margin:4px 0 0;line-height:1.5">'+esc(c.text)+'</p></div>').join(''):'<p style="font-size:12px;color:#aaa">Niciun comentariu încă.</p>';
+      body=`<div class="art-body">
+        <div class="two-col">
+          <div class="col-actual"><p class="col-label actual">📄 Text actual</p><p class="col-text">${esc(art.actual)}</p></div>
+          <div class="col-propus"><p class="col-label propus">✏️ Text propus</p><p class="col-text">${esc(art.propus)}</p></div>
+        </div>
+        ${!isSubmitted?`<div class="vote-row"><button class="${btnDa}" onclick="voteArticle('${art.id}','da')">✓ De acord cu propunerea</button><button class="${btnNu}" onclick="voteArticle('${art.id}','nu')">✗ Nu sunt de acord</button></div>`:(vote?`<div class="tag ${vote==='da'?'tag-da':'tag-nu'}" style="padding:8px 14px;font-size:13px;margin:12px 0;display:inline-block">Votul tău: ${vote==='da'?'✓ De acord':'✗ Nu sunt de acord'}</div>`:'')}
+        <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">💬 Propunere / Comentariu (opțional)</label><textarea rows="2" ${dis} placeholder="Scrieți propunerea de modificare sau orice observație..." oninput="commentArticle('${art.id}',this.value)">${myC}</textarea></div>
+        <div class="stats-box">
+          <p style="font-size:12px;font-weight:700;color:#534AB7;margin-bottom:8px">📊 Cum au votat ceilalți reprezentanți</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 Comentarii: ${comments.length}</span></div>
+          ${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii (${stats.total} voturi exprimate)</p>`:''}
+          <div style="margin-top:10px">${commHtml}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="${cardClass}"><div class="art-header" onclick="toggleArticle('${art.id}')"><span class="tag tag-info" style="min-width:36px;text-align:center">${idx+1}/${ARTICLES.length}</span><span style="flex:1;font-size:14px;font-weight:600">${esc(art.title)}</span>${art.isNew?'<span class="tag tag-new">NOU</span>':''}${vote?'<span style="font-size:16px">'+(vote==='da'?'✅':'❌')+'</span>':''}<span style="color:#bbb;font-size:14px">${isOpen?'▲':'▼'}</span></div>${body}</div>`;
+  }).join('');
+  updateProgress();
+}
+
+function renderNewArticles() {
+  const list=document.getElementById('new-articles-list');
+  if (!list) return;
+  if (!newArticles.length) { list.innerHTML='<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Nu există propuneri încă. Fii primul care propune!</p>'; return; }
+  list.innerHTML=newArticles.map(art=>{
+    const isOwn=art.proposedBy===currentCode, voted=art.votes?.includes(currentCode), vCount=art.votes?.length||0;
+    return `<div class="art-card" style="padding:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="flex:1"><span class="tag tag-new" style="margin-bottom:6px;display:inline-block">Propunere nouă</span><h3 style="font-size:14px;font-weight:700">${esc(art.title)}</h3><p style="font-size:12px;color:#888;margin-top:3px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong></p></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${isOwn?`<button class="btn-edit" onclick="editNewArticle('${art.id}',${JSON.stringify(art.title)},${JSON.stringify(art.text)})">✏️ Editează</button><button class="btn-danger" onclick="deleteNewArticle('${art.id}')">🗑️ Șterge</button>`:''}
+        </div>
+      </div>
+      <p style="font-size:13px;color:#4a5568;line-height:1.7;white-space:pre-line;background:#f7f9fc;border-radius:8px;padding:12px;margin-bottom:12px">${esc(art.text)}</p>
+      <button class="like-btn ${voted?'liked':''}" onclick="voteNewArticle('${art.id}',${JSON.stringify(art.votes||[])})">👍 Susțin această propunere &nbsp;<strong>${vCount}</strong></button>
+      ${voted?'<span style="font-size:11px;color:#534AB7;margin-left:8px">✓ Ai susținut această propunere</span>':''}
+    </div>`;
+  }).join('');
+}
+
+function renderStats() {
+  const total=Object.keys(allResponses).length, submitted=Object.values(allResponses).filter(e=>e.submitted).length;
+  document.getElementById('stats-summary').innerHTML=[
+    {l:'Total clase participante',v:total,c:'#534AB7'},{l:'Răspunsuri finalizate',v:submitted,c:'#3B6D11'},
+    {l:'În progres',v:total-submitted,c:'#854F0B'},{l:'Total clase C.R.P.',v:34,c:'#185FA5'}
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
+  document.getElementById('stats-list').innerHTML=ARTICLES.map(art=>{
+    const stats=getStats(art.id),comments=getComments(art.id),pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
+    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700;margin-bottom:10px">${esc(art.title)}</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 ${comments.length} comentarii</span></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px">'+comments.map(c=>'<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span></div>').join('')+'</div>':''}</div>`;
+  }).join('');
+}
+
+function renderAdmin() {
+  const total=Object.keys(allResponses).length, submitted=Object.values(allResponses).filter(e=>e.submitted).length;
+  document.getElementById('admin-overview').innerHTML=[
+    {l:'Clase înregistrate',v:total,c:'#534AB7'},{l:'Răspunsuri finalizate',v:submitted,c:'#3B6D11'},
+    {l:'În progres',v:total-submitted,c:'#854F0B'},{l:'Total clase C.R.P.',v:34,c:'#185FA5'}
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
+  document.getElementById('admin-articles').innerHTML=ARTICLES.map(art=>{
+    const stats=getStats(art.id),comments=getComments(art.id),pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
+    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><div style="display:flex;gap:8px"><span class="tag tag-da">✓ ${stats.da}</span><span class="tag tag-nu">✗ ${stats.nu}</span></div></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii (${stats.total} voturi)</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px"><p style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">Comentarii ('+comments.length+'):</p>'+comments.map(c=>'<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span></div>').join('')+'</div>':''}</div>`;
+  }).join('');
+  renderAdminNewArticles();
+  document.getElementById('admin-classes').innerHTML=Object.entries(allResponses).map(([code,e])=>
+    `<div class="stat-card" style="display:flex;align-items:center;justify-content:space-between"><div><p style="font-size:12px;font-weight:700;color:#534AB7">${code}</p><p style="font-size:11px;color:#888">${e.clasa}</p></div><span style="font-size:18px">${e.submitted?'✅':'⏳'}</span></div>`
+  ).join('')||'<p style="font-size:13px;color:#aaa">Niciun răspuns încă.</p>';
+}
+
+function renderAdminNewArticles() {
+  const el=document.getElementById('admin-new-articles');
+  if (!el) return;
+  if (!newArticles.length) { el.innerHTML='<p style="color:#aaa;font-size:13px">Nu există propuneri de articole noi.</p>'; return; }
+  el.innerHTML=newArticles.map(art=>`<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><p style="font-size:11px;color:#888;margin:3px 0 8px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong> · 👍 ${art.votes?.length||0} susțineri</p><p style="font-size:12px;color:#555;line-height:1.6;white-space:pre-line">${esc(art.text)}</p></div>`).join('');
+}
+</script>
+</body>
+</html>
