@@ -198,6 +198,7 @@ const ARTICLES = JSON.parse(document.getElementById('articles-data').textContent
 
 let currentCode=null, myVotes={}, myComments={}, isSubmitted=false, expandedArt=null, commentLikes={};
 window._editingComment = null;
+window._editingNewArt = null;
 let allResponses={}, newArticles=[], unsubResp=null, unsubNew=null, unsubCommentLikes=null;
 
 window.showScreen = n => {
@@ -331,6 +332,7 @@ window.saveEditedComment = (artId) => {
   if (!ta) return;
   myComments[artId] = ta.value.trim();
   window._editingComment = null;
+window._editingNewArt = null;
   setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:serverTimestamp()});
   showMsg('Comentariul a fost actualizat. ✅');
   renderArticles();
@@ -338,6 +340,7 @@ window.saveEditedComment = (artId) => {
 
 window.cancelEditComment = () => {
   window._editingComment = null;
+window._editingNewArt = null;
   renderArticles();
 };
 
@@ -380,11 +383,23 @@ window.deleteNewArticle = async docId => {
   }
 };
 
-window.editNewArticle = async (docId,ct,cx) => {
-  const nt=prompt('Editează titlul:',ct); if(nt===null) return;
-  const nx=prompt('Editează textul:',cx); if(nx===null) return;
-  await updateDoc(doc(db,'rof_new_articles',docId),{title:nt.trim(),text:nx.trim()});
+window.editNewArticle = (docId) => {
+  window._editingNewArt = docId;
+  renderNewArticles();
+};
+
+window.saveEditedNewArticle = async (docId) => {
+  const titleEl = document.getElementById('edit-new-title-' + docId);
+  const textEl = document.getElementById('edit-new-text-' + docId);
+  if (!titleEl || !textEl) return;
+  await updateDoc(doc(db,'rof_new_articles',docId),{title:titleEl.value.trim(),text:textEl.value.trim()});
+  window._editingNewArt = null;
   showMsg('Propunerea a fost actualizată. ✅');
+};
+
+window.cancelEditNewArticle = () => {
+  window._editingNewArt = null;
+  renderNewArticles();
 };
 
 function updateProgress() {
@@ -467,15 +482,29 @@ function renderNewArticles() {
   if (!newArticles.length) { list.innerHTML='<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Nu există propuneri încă. Fii primul care propune!</p>'; return; }
   list.innerHTML=newArticles.map(art=>{
     const isOwn=art.proposedBy===currentCode, voted=art.votes?.includes(currentCode), vCount=art.votes?.length||0;
+    const isEditing = window._editingNewArt === art.id;
     return `<div class="art-card" style="padding:16px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-        <div style="flex:1"><span class="tag tag-new" style="margin-bottom:6px;display:inline-block">Propunere nouă</span><h3 style="font-size:14px;font-weight:700">${esc(art.title)}</h3><p style="font-size:12px;color:#888;margin-top:3px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong></p></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">${isOwn?`<button class="btn-edit" onclick="editNewArticle('${art.id}',${JSON.stringify(art.title)},${JSON.stringify(art.text)})">✏️ Editează</button><button class="btn-danger" onclick="deleteNewArticle('${art.id}')">🗑️ Șterge</button>`:''}
+        <div style="flex:1"><span class="tag tag-new" style="margin-bottom:6px;display:inline-block">Propunere nouă</span>
+        ${isEditing ? '' : `<h3 style="font-size:14px;font-weight:700">${esc(art.title)}</h3>`}
+        <p style="font-size:12px;color:#888;margin-top:3px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong></p></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${isOwn && !isEditing ?`<button class="btn-edit" onclick="editNewArticle('${art.id}')">✏️ Editează</button><button class="btn-danger" onclick="deleteNewArticle('${art.id}')">🗑️ Șterge</button>`:''}
         </div>
       </div>
-      <p style="font-size:13px;color:#4a5568;line-height:1.7;white-space:pre-line;background:#f7f9fc;border-radius:8px;padding:12px;margin-bottom:12px">${esc(art.text)}</p>
-      <button class="like-btn ${voted?'liked':''}" onclick="voteNewArticle('${art.id}',${JSON.stringify(art.votes||[])})">👍 Susțin această propunere &nbsp;<strong>${vCount}</strong></button>
-      ${voted?'<span style="font-size:11px;color:#534AB7;margin-left:8px">✓ Ai susținut această propunere</span>':''}
+      ${isEditing ? `
+        <div style="margin-bottom:10px">
+          <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Titlu</label>
+          <input id="edit-new-title-${art.id}" value="${esc(art.title)}" style="margin-bottom:8px">
+          <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Text</label>
+          <textarea id="edit-new-text-${art.id}" rows="4" style="resize:vertical">${esc(art.text)}</textarea>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn-primary" onclick="saveEditedNewArticle('${art.id}')" style="font-size:12px;padding:6px 14px">💾 Salvează</button>
+            <button onclick="cancelEditNewArticle()" style="font-size:12px;padding:6px 14px">✕ Anulează</button>
+          </div>
+        </div>
+      ` : `<p style="font-size:13px;color:#4a5568;line-height:1.7;white-space:pre-line;background:#f7f9fc;border-radius:8px;padding:12px;margin-bottom:12px">${esc(art.text)}</p>`}
+      ${!isEditing ? `<button class="like-btn ${voted?'liked':''}" onclick="voteNewArticle('${art.id}',${JSON.stringify(art.votes||[])})">👍 Susțin această propunere &nbsp;<strong>${vCount}</strong></button>
+      ${voted?'<span style="font-size:11px;color:#534AB7;margin-left:8px">✓ Ai susținut această propunere</span>':''}` : ''}
     </div>`;
   }).join('');
 }
