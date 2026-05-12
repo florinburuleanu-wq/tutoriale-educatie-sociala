@@ -171,7 +171,7 @@ button:hover{background:#f0f0f8}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDvlXhBKw3pwHGneNq7olgEc7b4SqjiuqQ",
@@ -242,8 +242,9 @@ const ARTICLES = [
    propus:"(1) Regulamentul poate fi revizuit și modificat de cel puțin jumătate plus 1 din membrii C.R.P. în cadrul ședințelor sau prin sondaj pe grupul online.\n(2) Regulamentul este obligatoriu pentru toți membrii C.R.P. Președinții comitetelor vor aduce la cunoștința părinților prevederile.\n(3) Aprobat în ședința C.R.P. din 11 mai 2026."}
 ];
 
-let currentCode=null, myVotes={}, myComments={}, isSubmitted=false, expandedArt=null;
-let allResponses={}, newArticles=[], unsubResp=null, unsubNew=null;
+let currentCode=null, myVotes={}, myComments={}, isSubmitted=false, expandedArt=null, commentLikes={};
+window._editingComment = null;
+let allResponses={}, newArticles=[], unsubResp=null, unsubNew=null, unsubCommentLikes=null;
 
 window.showScreen = n => {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -283,6 +284,12 @@ function subscribeAll(isAdmin=false) {
     snap.forEach(d=>{ allResponses[d.id]=d.data(); });
     if (isAdmin) { renderAdmin(); document.getElementById('loading-admin').style.display='none'; document.getElementById('admin-content').style.display='block'; }
     else { document.getElementById('loading-main').style.display='none'; document.getElementById('main-content').style.display='block'; renderMain(); }
+  });
+  if (unsubCommentLikes) unsubCommentLikes();
+  unsubCommentLikes = onSnapshot(collection(db,'rof_comment_likes'), snap => {
+    commentLikes={};
+    snap.forEach(d=>{ commentLikes[d.id]=d.data(); });
+    if (expandedArt) renderArticles();
   });
   if (unsubNew) unsubNew();
   unsubNew = onSnapshot(collection(db,'rof_new_articles'), snap => {
@@ -358,6 +365,54 @@ window.submitNewArticle = async () => {
   showMsg('Propunerea ta a fost trimisă și este vizibilă tuturor! ✅');
 };
 
+window.editMyComment = (artId) => {
+  if (isSubmitted) return;
+  // Setam flag de editare si re-render
+  window._editingComment = artId;
+  renderArticles();
+};
+
+window.saveEditedComment = (artId) => {
+  const ta = document.getElementById('edit-textarea-' + artId);
+  if (!ta) return;
+  myComments[artId] = ta.value.trim();
+  window._editingComment = null;
+  setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:serverTimestamp()});
+  showMsg('Comentariul a fost actualizat. ✅');
+  renderArticles();
+};
+
+window.cancelEditComment = () => {
+  window._editingComment = null;
+  renderArticles();
+};
+
+window.deleteMyComment = (artId) => {
+  if (isSubmitted) return;
+  if (!confirm('Ești sigur că vrei să ștergi acest comentariu?')) return;
+  delete myComments[artId];
+  // Auto-save
+  setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:serverTimestamp()});
+  showMsg('Comentariul a fost șters. ✅');
+  renderArticles();
+};
+
+window.likeComment = async (artId, commentCode) => {
+  const likeKey = artId + '_' + commentCode;
+  const ref = doc(db,'rof_comment_likes', likeKey);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const likes = snap.data().likedBy || [];
+    if (likes.includes(currentCode)) {
+      await updateDoc(ref, { likedBy: arrayRemove(currentCode) });
+    } else {
+      await updateDoc(ref, { likedBy: arrayUnion(currentCode) });
+    }
+  } else {
+    await setDoc(ref, { artId, commentCode, likedBy: [currentCode] });
+  }
+};
+
 window.voteNewArticle = async (docId,currentVotes) => {
   const already=currentVotes.includes(currentCode);
   const newV=already?currentVotes.filter(v=>v!==currentCode):[...currentVotes,currentCode];
@@ -414,14 +469,31 @@ function renderArticles() {
       const btnDa='btn-vote'+(vote==='da'?' sel-da':''), btnNu='btn-vote'+(vote==='nu'?' sel-nu':'');
       const dis=isSubmitted?'disabled style="background:#f9f9f9"':'';
       const myC=esc(myComments[art.id]||'');
-      const commHtml=comments.length>0?comments.map(c=>'<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+'</span><p style="font-size:12px;color:#555;margin:4px 0 0;line-height:1.5">'+esc(c.text)+'</p></div>').join(''):'<p style="font-size:12px;color:#aaa">Niciun comentariu încă.</p>';
+      const commHtml=comments.length>0?comments.map(c=>{
+        const likeKey=art.id+'_'+c.clasa.replace(/\s/g,'_');
+        const likeData=Object.values(commentLikes).find(l=>l.artId===art.id && l.commentCode===c.clasa);
+        const likeCount=likeData?.likedBy?.length||0;
+        const iLiked=likeData?.likedBy?.includes(currentCode)||false;
+        return '<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+'</span><p style="font-size:12px;color:#555;margin:4px 0 6px;line-height:1.5">'+esc(c.text)+'</p><button class="like-btn '+(iLiked?'liked':'')+'" onclick="likeComment(\''+art.id+'\',\''+c.clasa+'\')" style="font-size:11px;padding:3px 10px">👍 Susțin '+likeCount+'</button></div>';
+      }).join(''):'<p style="font-size:12px;color:#aaa">Niciun comentariu încă.</p>';
       body=`<div class="art-body">
         <div class="two-col">
           <div class="col-actual"><p class="col-label actual">📄 Text actual</p><p class="col-text">${esc(art.actual)}</p></div>
           <div class="col-propus"><p class="col-label propus">✏️ Text propus</p><p class="col-text">${esc(art.propus)}</p></div>
         </div>
         ${!isSubmitted?`<div class="vote-row"><button class="${btnDa}" onclick="voteArticle('${art.id}','da')">✓ De acord cu propunerea</button><button class="${btnNu}" onclick="voteArticle('${art.id}','nu')">✗ Nu sunt de acord</button></div>`:(vote?`<div class="tag ${vote==='da'?'tag-da':'tag-nu'}" style="padding:8px 14px;font-size:13px;margin:12px 0;display:inline-block">Votul tău: ${vote==='da'?'✓ De acord':'✗ Nu sunt de acord'}</div>`:'')}
-        <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">💬 Propunere / Comentariu (opțional)</label><textarea rows="2" ${dis} placeholder="Scrieți propunerea de modificare sau orice observație..." oninput="commentArticle('${art.id}',this.value)">${myC}</textarea></div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">💬 Propunere / Comentariu (opțional)</label>
+          ${(()=>{
+            const isEditing = window._editingComment === art.id;
+            const hasComment = !!myComments[art.id];
+            if (isSubmitted && hasComment) return `<div style="background:#f9f9f9;border-radius:8px;padding:10px 12px;border-left:3px solid #ccc"><p style="font-size:12px;color:#555;line-height:1.5">${esc(myComments[art.id])}</p></div>`;
+            if (isSubmitted && !hasComment) return `<p style="font-size:12px;color:#aaa;font-style:italic">Nu ai lăsat niciun comentariu.</p>`;
+            if (!isSubmitted && hasComment && !isEditing) return `<div style="background:#f0f4f8;border-radius:8px;padding:10px 12px;margin-bottom:6px;border-left:3px solid #534AB7"><p style="font-size:12px;color:#333;line-height:1.5;margin-bottom:8px">${esc(myComments[art.id])}</p><div style="display:flex;gap:6px"><button class="btn-edit" onclick="editMyComment('${art.id}')">✏️ Editează</button><button class="btn-danger" onclick="deleteMyComment('${art.id}')">🗑️ Șterge</button></div></div>`;
+            if (!isSubmitted && (isEditing || !hasComment)) return `<textarea id="edit-textarea-${art.id}" rows="2" placeholder="Scrieți propunerea de modificare sau orice observație..." oninput="commentArticle('${art.id}',this.value)">${esc(myComments[art.id]||'')}</textarea>${isEditing ? `<div style="display:flex;gap:6px;margin-top:6px"><button class="btn-primary" onclick="saveEditedComment('${art.id}')" style="font-size:12px;padding:5px 12px">💾 Salvează</button><button onclick="cancelEditComment()" style="font-size:12px;padding:5px 12px">✕ Anulează</button></div>` : ''}`;
+            return '';
+          })()}
+        </div>
         <div class="stats-box">
           <p style="font-size:12px;font-weight:700;color:#534AB7;margin-bottom:8px">📊 Cum au votat ceilalți reprezentanți</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 Comentarii: ${comments.length}</span></div>
@@ -462,7 +534,7 @@ function renderStats() {
   ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
   document.getElementById('stats-list').innerHTML=ARTICLES.map(art=>{
     const stats=getStats(art.id),comments=getComments(art.id),pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
-    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700;margin-bottom:10px">${esc(art.title)}</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 ${comments.length} comentarii</span></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px">'+comments.map(c=>'<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span></div>').join('')+'</div>':''}</div>`;
+    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700;margin-bottom:10px">${esc(art.title)}</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 ${comments.length} comentarii</span></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px">'+comments.map(c=>{const likeData=Object.values(commentLikes).find(l=>l.artId===art.id&&l.commentCode===c.clasa);const likeCount=likeData?.likedBy?.length||0;return '<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span>'+(likeCount>0?' <span class="tag tag-info" style="margin-left:6px">👍 '+likeCount+'</span>':'')+'</div>';}).join('')+'</div>':''}</div>`;
   }).join('');
 }
 
@@ -474,7 +546,7 @@ function renderAdmin() {
   ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
   document.getElementById('admin-articles').innerHTML=ARTICLES.map(art=>{
     const stats=getStats(art.id),comments=getComments(art.id),pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
-    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><div style="display:flex;gap:8px"><span class="tag tag-da">✓ ${stats.da}</span><span class="tag tag-nu">✗ ${stats.nu}</span></div></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii (${stats.total} voturi)</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px"><p style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">Comentarii ('+comments.length+'):</p>'+comments.map(c=>'<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span></div>').join('')+'</div>':''}</div>`;
+    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><div style="display:flex;gap:8px"><span class="tag tag-da">✓ ${stats.da}</span><span class="tag tag-nu">✗ ${stats.nu}</span></div></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii (${stats.total} voturi)</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px"><p style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">Comentarii ('+comments.length+'):</p>'+comments.map(c=>{const likeData=Object.values(commentLikes).find(l=>l.artId===art.id&&l.commentCode===c.clasa);const likeCount=likeData?.likedBy?.length||0;return '<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span>'+(likeCount>0?' <span class="tag tag-info" style="margin-left:6px">👍 '+likeCount+' susțineri</span>':'')+'</div>';}).join('')+'</div>':''}</div>`;
   }).join('');
   renderAdminNewArticles();
   document.getElementById('admin-classes').innerHTML=Object.entries(allResponses).map(([code,e])=>
