@@ -54,7 +54,13 @@ button:hover{background:#f0f0f8}
 </head>
 <body>
 
-<div class="deadline-banner">⏳ Consultare ROF C.R.P. &nbsp;|&nbsp; <span style="opacity:0.9">Voturile se închid pe <strong>25 mai 2026</strong></span></div>
+<div class="deadline-banner" id="deadline-banner">⏳ Consultare ROF C.R.P. &nbsp;|&nbsp; <span style="opacity:0.9">Voturile se închid pe <strong>25 mai 2026</strong></span></div>
+<script>
+  if (new Date() > new Date('2026-05-25T23:59:59')) {
+    document.getElementById('deadline-banner').style.background = 'linear-gradient(135deg,#A32D2D,#c53030)';
+    document.getElementById('deadline-banner').innerHTML = '🔒 Consultare ROF C.R.P. &nbsp;|&nbsp; <span style="opacity:0.9">Consultarea s-a <strong>încheiat</strong> pe 25 mai 2026</span>';
+  }
+</script>
 
 <!-- LOGIN -->
 <div id="screen-login" class="screen active" style="min-height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center;padding:24px">
@@ -196,6 +202,10 @@ const CODES = {
 
 const ARTICLES = JSON.parse(document.getElementById('articles-data').textContent);
 
+// Verificare data limita
+const DEADLINE = new Date('2026-05-25T23:59:59');
+const isExpired = () => new Date() > DEADLINE;
+
 let currentCode=null, myVotes={}, myComments={}, isSubmitted=false, expandedArt=null, commentLikes={};
 window._editingComment = null;
 window._editingNewArt = null;
@@ -209,6 +219,7 @@ window.showScreen = n => {
 window.doLogin = async () => {
   const val = document.getElementById('code-input').value.trim().toUpperCase();
   const err = document.getElementById('code-error');
+  if (isExpired()) { err.textContent='Consultarea s-a încheiat pe 25 mai 2026. Voturile nu mai pot fi modificate.'; err.style.display='block'; return; }
   if (!CODES[val]) { err.textContent='Cod invalid. Verificați codul primit.'; err.style.display='block'; return; }
   err.style.display='none'; currentCode=val;
   document.getElementById('loading-main').style.display='block';
@@ -416,7 +427,16 @@ function updateProgress() {
 
 function renderMain() {
   updateProgress(); renderArticles();
-  if (isSubmitted) {
+  if (isExpired()) {
+    // Consultarea s-a incheiat - ascunde butoanele de vot
+    document.getElementById('submit-area').style.display='none';
+    document.getElementById('btn-save-draft').style.display='none';
+    if (!isSubmitted) {
+      document.getElementById('submitted-area').style.display='block';
+      document.getElementById('submitted-area').innerHTML='<div style="font-size:32px;margin-bottom:8px">🔒</div><h3 style="font-size:16px;font-weight:700;color:#A32D2D;margin-bottom:6px">Consultarea s-a încheiat</h3><p style="font-size:13px;color:#666">Termenul limită a fost 25 mai 2026. Voturile nu mai pot fi modificate, dar poți vedea rezultatele în tab-ul Statistici.</p>';
+    }
+    isSubmitted = true;
+  } else if (isSubmitted) {
     document.getElementById('submit-area').style.display='none';
     document.getElementById('submitted-area').style.display='block';
     document.getElementById('btn-save-draft').style.display='none';
