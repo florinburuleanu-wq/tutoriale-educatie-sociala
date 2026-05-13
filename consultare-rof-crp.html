@@ -291,18 +291,9 @@ button:hover{background:#f0f0f8}
     "propus": "(1) La propunerea membrilor C.R.P., aplicându-se principiul majorității în luarea deciziilor, Regulamentul de Organizare și Funcționare poate fi revizuit și modificat de cel puțin jumătate plus 1 din membrii C.R.P. în cadrul ședințelor online/cu prezență fizică sau prin sondaj pe grupul online.\n(2) Prezentul Regulament este obligatoriu pentru toți membrii C.R.P. Președinții comitetelor de părinți vor aduce la cunoștința părinților fiecărei clase, prevederile prezentului Regulament.\n(3) Regulamentul de Organizare și Funcționare al C.R.P. din cadrul C.N.G.Ș. a fost dezbătut și aprobat în ședința C.R.P. din data de 11.05.2026."
   }
 ]
-// Inregistreaza toate functiile global
-window._registerFns({
-  doLogin, doAdmin, saveDraft, doSubmit, switchTab, toggleArticle,
-  voteArticle, commentArticle, submitNewArticle, voteNewArticle,
-  deleteNewArticle, editNewArticle, saveEditedNewArticle, cancelEditNewArticle,
-  likeComment, editMyComment, deleteMyComment, saveEditedComment,
-  cancelEditComment, showScreen
-});
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
 // Verificare data limita
 const DEADLINE = new Date('2026-05-25T23:59:59');
 const isExpired = () => new Date() > DEADLINE;
@@ -327,8 +318,15 @@ const firebaseConfig = {
   appId: "1:60750339466:web:a6bbdf57a3b4273e10fc73"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let db;
+function initApp() {
+  if (typeof firebase === 'undefined') {
+    setTimeout(initApp, 100);
+    return;
+  }
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+}
 
 const ADMIN_PASS = "130629";
 const CODES = {
@@ -684,7 +682,29 @@ function renderAdminNewArticles() {
   el.innerHTML=newArticles.map(art=>`<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><p style="font-size:11px;color:#888;margin:3px 0 8px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong> · 👍 ${art.votes?.length||0} susțineri</p><p style="font-size:12px;color:#555;line-height:1.6;white-space:pre-line">${esc(art.text)}</p></div>`).join('');
 }
 
-}); // end DOMContentLoaded
+
+// Expune functiile global
+window.doLogin = doLogin;
+window.doAdmin = doAdmin;
+window.saveDraft = saveDraft;
+window.doSubmit = doSubmit;
+window.switchTab = switchTab;
+window.toggleArticle = toggleArticle;
+window.voteArticle = voteArticle;
+window.commentArticle = commentArticle;
+window.submitNewArticle = submitNewArticle;
+window.voteNewArticle = voteNewArticle;
+window.deleteNewArticle = deleteNewArticle;
+window.editNewArticle = editNewArticle;
+window.saveEditedNewArticle = saveEditedNewArticle;
+window.cancelEditNewArticle = cancelEditNewArticle;
+window.likeComment = likeComment;
+window.editMyComment = editMyComment;
+window.deleteMyComment = deleteMyComment;
+window.saveEditedComment = saveEditedComment;
+window.cancelEditComment = cancelEditComment;
+window.showScreen = showScreen;
 </script>
+<script>document.addEventListener("DOMContentLoaded", function(){ setTimeout(initApp, 50); });</script>
 </body>
 </html>
