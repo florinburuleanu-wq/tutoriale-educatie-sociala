@@ -64,7 +64,7 @@ button:hover{background:#f0f4f0}
     </div>
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:24px;margin-bottom:12px">
       <label style="font-size:13px;color:#555;display:block;margin-bottom:6px;font-weight:600">Codul tău unic de acces</label>
-      <input id="code-input" placeholder="ex: TRANDAFIR" style="font-family:monospace;letter-spacing:2px;font-size:15px;text-transform:uppercase;margin-bottom:10px" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doLogin()">
+      <input id="code-input" placeholder="ex: FLOARE" style="font-family:monospace;letter-spacing:2px;font-size:15px;text-transform:uppercase;margin-bottom:10px" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doLogin()">
       <div id="code-error" class="error-msg" style="display:none"></div>
       <button class="btn-primary" onclick="doLogin()" style="width:100%;padding:11px;margin-top:6px">Intră în platformă →</button>
     </div>
@@ -78,7 +78,7 @@ button:hover{background:#f0f4f0}
     </div>
     <div class="info-box">
       <strong>📋 Instrucțiuni:</strong><br>
-      Introduceți codul unic primit (ex: <code style="background:#d4edda;padding:1px 5px;border-radius:4px">TRANDAFIR</code>).<br>
+      Introduceți codul unic primit. Codul este format dintr-un nume de floare și vă este transmis personal.<br>
       Veți putea oferi feedback pentru fiecare profesor în parte.<br>
       Feedback-ul este <strong>anonim</strong> — răspunsurile apar doar cu codul florilor, nu cu numele.
     </div>
@@ -451,6 +451,7 @@ const isExpired = () => new Date() > DEADLINE;
 const SECTIONS = JSON.parse(document.getElementById('sections-data').textContent);
 
 let db, currentCode=null, myAnswers={}, isSubmitted=false, expandedSection=null, allResponses={}, unsubResp=null;
+window._editingComment = null;
 
 function initApp() {
   if (typeof firebase === 'undefined') { setTimeout(initApp, 100); return; }
@@ -586,6 +587,33 @@ function updateProgress() {
   }
 }
 
+function startEditComment(secId, qId) {
+  window._editingComment = secId+'_'+qId;
+  renderSections();
+}
+
+function saveComment(secId, qId) {
+  const ta = document.getElementById('comment-'+secId+'-'+qId);
+  if (ta) myAnswers[secId][qId] = ta.value.trim();
+  window._editingComment = null;
+  db.collection('feedback_votes').doc(currentCode).set({answers:myAnswers,submitted:false,cod:currentCode,elev:CODES[currentCode],ts:firebase.firestore.FieldValue.serverTimestamp()});
+  showMsg('Comentariul a fost actualizat. ✅');
+  renderSections();
+}
+
+function cancelEditComment(secId, qId) {
+  window._editingComment = null;
+  renderSections();
+}
+
+function deleteComment(secId, qId) {
+  if (!confirm('Ești sigur că vrei să ștergi acest comentariu?')) return;
+  if (myAnswers[secId]) delete myAnswers[secId][qId];
+  db.collection('feedback_votes').doc(currentCode).set({answers:myAnswers,submitted:false,cod:currentCode,elev:CODES[currentCode],ts:firebase.firestore.FieldValue.serverTimestamp()});
+  showMsg('Comentariul a fost șters. ✅');
+  renderSections();
+}
+
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function renderMain() {
@@ -622,7 +650,28 @@ function renderSections() {
 
         let inputHtml = '';
         if (q.type==='text') {
-          inputHtml = `<textarea rows="3" placeholder="Scrieți comentariul dumneavoastră... (opțional)" oninput="setTextAnswer('${sec.id}','${q.id}',this.value)" ${isSubmitted?'disabled style="background:#f9f9f9"':''}>${esc(myVal)}</textarea>`;
+          const isEditingComment = window._editingComment === sec.id+'_'+q.id;
+          if (isSubmitted && myVal) {
+            inputHtml = `<div style="background:#f9f9f9;border-radius:8px;padding:10px 12px;border-left:3px solid #ccc"><p style="font-size:12px;color:#555;line-height:1.5">${esc(myVal)}</p></div>`;
+          } else if (isSubmitted && !myVal) {
+            inputHtml = `<p style="font-size:12px;color:#aaa;font-style:italic">Nu ai lăsat niciun comentariu.</p>`;
+          } else if (!isSubmitted && myVal && !isEditingComment) {
+            inputHtml = `<div style="background:#f0fff4;border-radius:8px;padding:10px 12px;margin-bottom:6px;border-left:3px solid #2E7D32">
+              <p style="font-size:12px;color:#333;line-height:1.5;margin-bottom:8px">${esc(myVal)}</p>
+              <div style="display:flex;gap:6px">
+                <button class="btn-edit" onclick="startEditComment('${sec.id}','${q.id}')">✏️ Editează</button>
+                <button class="btn-danger" onclick="deleteComment('${sec.id}','${q.id}')">🗑️ Șterge</button>
+              </div>
+            </div>`;
+          } else if (!isSubmitted && (isEditingComment || !myVal)) {
+            inputHtml = `<textarea id="comment-${sec.id}-${q.id}" rows="3" placeholder="Scrieți comentariul dumneavoastră... (opțional)" oninput="setTextAnswer('${sec.id}','${q.id}',this.value)">${esc(myVal)}</textarea>`;
+            if (isEditingComment) {
+              inputHtml += `<div style="display:flex;gap:6px;margin-top:6px">
+                <button class="btn-primary" onclick="saveComment('${sec.id}','${q.id}')" style="font-size:12px;padding:5px 12px">💾 Salvează</button>
+                <button onclick="cancelEditComment('${sec.id}','${q.id}')" style="font-size:12px;padding:5px 12px">✕ Anulează</button>
+              </div>`;
+            }
+          }
           if (Object.keys(stats).length > 0) {
             inputHtml += '<div style="margin-top:10px"><p style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:6px">💬 Comentariile celorlalți:</p>' +
               Object.entries(allResponses)
