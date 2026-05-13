@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Consultare ROF — C.R.P. | Colegiul Național Gheorghe Șincai</title>
+<!-- Firebase UMD (nu necesita type=module) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#222;min-height:100vh}
 .screen{display:none}.screen.active{display:block}
@@ -50,17 +54,14 @@ button:hover{background:#f0f0f8}
 .like-btn{background:#f0f4f8;border:1px solid #dde;color:#534AB7;font-size:12px;padding:5px 12px;border-radius:20px;font-weight:600}
 .like-btn.liked{background:#E6F1FB;border-color:#534AB7}
 .info-box{background:#fff9e6;border:1px solid #f0d080;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#7a5c00;line-height:1.6}
+
 </style>
 </head>
 <body>
 
+
 <div class="deadline-banner" id="deadline-banner">⏳ Consultare ROF C.R.P. &nbsp;|&nbsp; <span style="opacity:0.9">Voturile se închid pe <strong>25 mai 2026</strong></span></div>
-<script>
-  if (new Date() > new Date('2026-05-25T23:59:59')) {
-    document.getElementById('deadline-banner').style.background = 'linear-gradient(135deg,#A32D2D,#c53030)';
-    document.getElementById('deadline-banner').innerHTML = '🔒 Consultare ROF C.R.P. &nbsp;|&nbsp; <span style="opacity:0.9">Consultarea s-a <strong>încheiat</strong> pe 25 mai 2026</span>';
-  }
-</script>
+
 
 <!-- LOGIN -->
 <div id="screen-login" class="screen active" style="min-height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center;padding:24px">
@@ -119,7 +120,13 @@ button:hover{background:#f0f0f8}
       <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')">📊 Statistici</button>
     </div>
     <div id="tab-articles">
-      <div class="info-box"><strong>Cum funcționează:</strong> Citiți textul actual și propunerea nouă pentru fiecare articol. Votați și lăsați comentarii dacă doriți modificări. La final apăsați <strong>Finalizează și trimite</strong>. Puteți salva progresul și reveni oricând.</div>
+      <div class="info-box"><strong>Cum funcționează:</strong><br>
+1. Citiți fiecare articol — textul actual și propunerea nouă.<br>
+2. Votați „De acord" sau „Nu sunt de acord" pentru fiecare articol în parte.<br>
+3. Lăsați comentarii sau propuneri de modificare dacă doriți.<br>
+4. Puteți propune articole noi în tab-ul „Propuneri noi".<br>
+5. <strong>După ce ați parcurs TOATE cele 15 articole</strong>, apăsați <strong>„Finalizează și trimite"</strong> o singură dată la final.<br><br>
+📌 Butonul <strong>„Finalizează și trimite"</strong> se apasă <strong>o singură dată</strong>, după ce ați votat toate articolele dorite. Puteți salva progresul și reveni oricând.</div>
       <div id="articles-list"></div>
       <div id="submit-area" style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;text-align:center;margin-top:8px">
         <p id="submit-info" style="font-size:13px;color:#666;margin-bottom:14px"></p>
@@ -175,395 +182,7 @@ button:hover{background:#f0f0f8}
   </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDvlXhBKw3pwHGneNq7olgEc7b4SqjiuqQ",
-  authDomain: "puterea-vocii-tale.firebaseapp.com",
-  projectId: "puterea-vocii-tale",
-  storageBucket: "puterea-vocii-tale.firebasestorage.app",
-  messagingSenderId: "60750339466",
-  appId: "1:60750339466:web:a6bbdf57a3b4273e10fc73"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const ADMIN_PASS = "130629";
-
-const CODES = {
-  "CRP-9A":"Cls. a IX-a A","CRP-9B":"Cls. a IX-a B","CRP-9C":"Cls. a IX-a C","CRP-9D":"Cls. a IX-a D","CRP-9E":"Cls. a IX-a E","CRP-9F":"Cls. a IX-a F","CRP-9G":"Cls. a IX-a G","CRP-9H":"Cls. a IX-a H","CRP-9I":"Cls. a IX-a I",
-  "CRP-10A":"Cls. a X-a A","CRP-10B":"Cls. a X-a B","CRP-10C":"Cls. a X-a C","CRP-10D":"Cls. a X-a D","CRP-10E":"Cls. a X-a E","CRP-10F":"Cls. a X-a F","CRP-10G":"Cls. a X-a G","CRP-10H":"Cls. a X-a H",
-  "CRP-11A":"Cls. a XI-a A","CRP-11B":"Cls. a XI-a B","CRP-11C":"Cls. a XI-a C","CRP-11D":"Cls. a XI-a D","CRP-11E":"Cls. a XI-a E","CRP-11F":"Cls. a XI-a F","CRP-11G":"Cls. a XI-a G","CRP-11H":"Cls. a XI-a H",
-  "CRP-12A":"Cls. a XII-a A","CRP-12B":"Cls. a XII-a B","CRP-12C":"Cls. a XII-a C","CRP-12D":"Cls. a XII-a D","CRP-12E":"Cls. a XII-a E","CRP-12F":"Cls. a XII-a F","CRP-12G":"Cls. a XII-a G","CRP-12H":"Cls. a XII-a H","CRP-12I":"Cls. a XII-a I",
-  "CRP-EX1":"Reprezentant Special 1","CRP-EX2":"Reprezentant Special 2"
-};
-
-const ARTICLES = JSON.parse(document.getElementById('articles-data').textContent);
-
-// Verificare data limita
-const DEADLINE = new Date('2026-05-25T23:59:59');
-const isExpired = () => new Date() > DEADLINE;
-
-let currentCode=null, myVotes={}, myComments={}, isSubmitted=false, expandedArt=null, commentLikes={};
-window._editingComment = null;
-window._editingNewArt = null;
-let allResponses={}, newArticles=[], unsubResp=null, unsubNew=null, unsubCommentLikes=null;
-
-window.showScreen = n => {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+n).classList.add('active');
-};
-
-window.doLogin = async () => {
-  const val = document.getElementById('code-input').value.trim().toUpperCase();
-  const err = document.getElementById('code-error');
-  if (isExpired()) { err.textContent='Consultarea s-a încheiat pe 25 mai 2026. Voturile nu mai pot fi modificate.'; err.style.display='block'; return; }
-  if (!CODES[val]) { err.textContent='Cod invalid. Verificați codul primit.'; err.style.display='block'; return; }
-  err.style.display='none'; currentCode=val;
-  document.getElementById('loading-main').style.display='block';
-  document.getElementById('main-content').style.display='none';
-  showScreen('main');
-  try {
-    const snap = await getDoc(doc(db,'rof_votes',val));
-    if (snap.exists()) { const d=snap.data(); myVotes=d.votes||{}; myComments=d.comments||{}; isSubmitted=d.submitted||false; }
-    subscribeAll();
-  } catch(e) { console.error(e); }
-};
-
-window.doAdmin = () => {
-  const val = document.getElementById('admin-input').value;
-  const err = document.getElementById('admin-error');
-  if (val!==ADMIN_PASS) { err.textContent='Parolă incorectă.'; err.style.display='block'; return; }
-  err.style.display='none';
-  document.getElementById('loading-admin').style.display='block';
-  document.getElementById('admin-content').style.display='none';
-  showScreen('admin');
-  subscribeAll(true);
-};
-
-function subscribeAll(isAdmin=false) {
-  if (unsubResp) unsubResp();
-  unsubResp = onSnapshot(collection(db,'rof_votes'), snap => {
-    allResponses={};
-    snap.forEach(d=>{ allResponses[d.id]=d.data(); });
-    if (isAdmin) { renderAdmin(); document.getElementById('loading-admin').style.display='none'; document.getElementById('admin-content').style.display='block'; }
-    else { document.getElementById('loading-main').style.display='none'; document.getElementById('main-content').style.display='block'; renderMain(); }
-  });
-  if (unsubCommentLikes) unsubCommentLikes();
-  unsubCommentLikes = onSnapshot(collection(db,'rof_comment_likes'), snap => {
-    commentLikes={};
-    snap.forEach(d=>{ commentLikes[d.id]=d.data(); });
-    if (expandedArt) renderArticles();
-  });
-  if (unsubNew) unsubNew();
-  unsubNew = onSnapshot(collection(db,'rof_new_articles'), snap => {
-    newArticles=[];
-    snap.forEach(d=>{ newArticles.push({id:d.id,...d.data()}); });
-    newArticles.sort((a,b)=>(b.ts?.seconds||0)-(a.ts?.seconds||0));
-    if (document.getElementById('tab-new')?.style.display!=='none') renderNewArticles();
-    if (isAdmin) renderAdminNewArticles();
-  });
-}
-
-const getStats = artId => {
-  let da=0,nu=0;
-  Object.values(allResponses).forEach(e=>{ if(e.votes?.[artId]==='da') da++; else if(e.votes?.[artId]==='nu') nu++; });
-  return {da,nu,total:da+nu};
-};
-
-const getComments = artId => Object.entries(allResponses)
-  .filter(([,e])=>e.comments?.[artId]?.trim())
-  .map(([code,e])=>({clasa:e.clasa||code,text:e.comments[artId]}));
-
-window.saveDraft = async () => {
-  await setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:serverTimestamp()});
-  showMsg('Progresul a fost salvat. Poți continua mai târziu. ✅');
-};
-
-window.doSubmit = async () => {
-  if (!Object.keys(myVotes).length) return;
-  await setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:true,clasa:CODES[currentCode],ts:serverTimestamp()});
-  isSubmitted=true;
-  document.getElementById('submit-area').style.display='none';
-  document.getElementById('submitted-area').style.display='block';
-  document.getElementById('btn-save-draft').style.display='none';
-  showMsg('Răspunsurile tale au fost înregistrate cu succes! ✅');
-  renderArticles();
-};
-
-const showMsg = text => {
-  const el=document.getElementById('save-msg');
-  el.textContent=text; el.style.display='block';
-  setTimeout(()=>el.style.display='none',4000);
-};
-
-window.switchTab = name => {
-  ['articles','new','stats'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
-    document.getElementById('tab-btn-'+t).className='tab-btn'+(t===name?' active':'');
-  });
-  if (name==='stats') renderStats();
-  if (name==='new') renderNewArticles();
-};
-
-window.toggleArticle = id => { expandedArt=expandedArt===id?null:id; renderArticles(); };
-
-window.voteArticle = (artId,val) => {
-  if (isSubmitted) return;
-  if (myVotes[artId]===val) delete myVotes[artId]; else myVotes[artId]=val;
-  updateProgress(); renderArticles();
-};
-
-window.commentArticle = (artId,val) => { if (!isSubmitted) myComments[artId]=val; };
-
-window.submitNewArticle = async () => {
-  const title=document.getElementById('new-art-title').value.trim();
-  const text=document.getElementById('new-art-text').value.trim();
-  const err=document.getElementById('new-art-error');
-  if (!title) { err.textContent='Vă rugăm să introduceți titlul articolului.'; err.style.display='block'; return; }
-  if (!text) { err.textContent='Vă rugăm să introduceți textul articolului.'; err.style.display='block'; return; }
-  err.style.display='none';
-  await addDoc(collection(db,'rof_new_articles'),{title,text,proposedBy:currentCode,clasa:CODES[currentCode],votes:[],ts:serverTimestamp()});
-  document.getElementById('new-art-title').value='';
-  document.getElementById('new-art-text').value='';
-  showMsg('Propunerea ta a fost trimisă și este vizibilă tuturor! ✅');
-};
-
-window.editMyComment = (artId) => {
-  if (isSubmitted) return;
-  // Setam flag de editare si re-render
-  window._editingComment = artId;
-  renderArticles();
-};
-
-window.saveEditedComment = (artId) => {
-  const ta = document.getElementById('edit-textarea-' + artId);
-  if (!ta) return;
-  myComments[artId] = ta.value.trim();
-  window._editingComment = null;
-window._editingNewArt = null;
-  setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:serverTimestamp()});
-  showMsg('Comentariul a fost actualizat. ✅');
-  renderArticles();
-};
-
-window.cancelEditComment = () => {
-  window._editingComment = null;
-window._editingNewArt = null;
-  renderArticles();
-};
-
-window.deleteMyComment = (artId) => {
-  if (isSubmitted) return;
-  if (!confirm('Ești sigur că vrei să ștergi acest comentariu?')) return;
-  delete myComments[artId];
-  // Auto-save
-  setDoc(doc(db,'rof_votes',currentCode),{votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:serverTimestamp()});
-  showMsg('Comentariul a fost șters. ✅');
-  renderArticles();
-};
-
-window.likeComment = async (artId, commentCode) => {
-  const likeKey = artId + '_' + commentCode;
-  const ref = doc(db,'rof_comment_likes', likeKey);
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
-    const likes = snap.data().likedBy || [];
-    if (likes.includes(currentCode)) {
-      await updateDoc(ref, { likedBy: arrayRemove(currentCode) });
-    } else {
-      await updateDoc(ref, { likedBy: arrayUnion(currentCode) });
-    }
-  } else {
-    await setDoc(ref, { artId, commentCode, likedBy: [currentCode] });
-  }
-};
-
-window.voteNewArticle = async (docId,currentVotes) => {
-  const already=currentVotes.includes(currentCode);
-  const newV=already?currentVotes.filter(v=>v!==currentCode):[...currentVotes,currentCode];
-  await updateDoc(doc(db,'rof_new_articles',docId),{votes:newV});
-};
-
-window.deleteNewArticle = async docId => {
-  if (confirm('Ești sigur că vrei să ștergi această propunere?')) {
-    await deleteDoc(doc(db,'rof_new_articles',docId));
-    showMsg('Propunerea a fost ștearsă.');
-  }
-};
-
-window.editNewArticle = (docId) => {
-  window._editingNewArt = docId;
-  renderNewArticles();
-};
-
-window.saveEditedNewArticle = async (docId) => {
-  const titleEl = document.getElementById('edit-new-title-' + docId);
-  const textEl = document.getElementById('edit-new-text-' + docId);
-  if (!titleEl || !textEl) return;
-  await updateDoc(doc(db,'rof_new_articles',docId),{title:titleEl.value.trim(),text:textEl.value.trim()});
-  window._editingNewArt = null;
-  showMsg('Propunerea a fost actualizată. ✅');
-};
-
-window.cancelEditNewArticle = () => {
-  window._editingNewArt = null;
-  renderNewArticles();
-};
-
-function updateProgress() {
-  const voted=Object.keys(myVotes).length;
-  const pct=Math.round((voted/ARTICLES.length)*100);
-  document.getElementById('main-progress').style.width=pct+'%';
-  document.getElementById('header-sub').textContent=CODES[currentCode]+' · '+(isSubmitted?'✅ Finalizat':voted+'/'+ARTICLES.length+' articole votate');
-  const info=document.getElementById('submit-info');
-  if (info) {
-    const rem=ARTICLES.length-voted;
-    info.innerHTML='Ai votat <strong>'+voted+'</strong> din <strong>'+ARTICLES.length+'</strong> articole.'+(rem>0?' <span style="color:#A32D2D">Mai ai '+rem+' nevotate.</span>':' <span style="color:#3B6D11">Toate articolele votate!</span>');
-  }
-}
-
-function renderMain() {
-  updateProgress(); renderArticles();
-  if (isExpired()) {
-    // Consultarea s-a incheiat - ascunde butoanele de vot
-    document.getElementById('submit-area').style.display='none';
-    document.getElementById('btn-save-draft').style.display='none';
-    if (!isSubmitted) {
-      document.getElementById('submitted-area').style.display='block';
-      document.getElementById('submitted-area').innerHTML='<div style="font-size:32px;margin-bottom:8px">🔒</div><h3 style="font-size:16px;font-weight:700;color:#A32D2D;margin-bottom:6px">Consultarea s-a încheiat</h3><p style="font-size:13px;color:#666">Termenul limită a fost 25 mai 2026. Voturile nu mai pot fi modificate, dar poți vedea rezultatele în tab-ul Statistici.</p>';
-    }
-    isSubmitted = true;
-  } else if (isSubmitted) {
-    document.getElementById('submit-area').style.display='none';
-    document.getElementById('submitted-area').style.display='block';
-    document.getElementById('btn-save-draft').style.display='none';
-  }
-}
-
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function renderArticles() {
-  const list=document.getElementById('articles-list');
-  if (!list) return;
-  list.innerHTML=ARTICLES.map((art,idx)=>{
-    const vote=myVotes[art.id], isOpen=expandedArt===art.id;
-    const stats=getStats(art.id), comments=getComments(art.id);
-    const cardClass='art-card'+(vote==='da'?' voted-da':vote==='nu'?' voted-nu':'');
-    let body='';
-    if (isOpen) {
-      const pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
-      const btnDa='btn-vote'+(vote==='da'?' sel-da':''), btnNu='btn-vote'+(vote==='nu'?' sel-nu':'');
-      const dis=isSubmitted?'disabled style="background:#f9f9f9"':'';
-      const myC=esc(myComments[art.id]||'');
-      const commHtml=comments.length>0?comments.map(c=>{
-        const likeKey=art.id+'_'+c.clasa.replace(/\s/g,'_');
-        const likeData=Object.values(commentLikes).find(l=>l.artId===art.id && l.commentCode===c.clasa);
-        const likeCount=likeData?.likedBy?.length||0;
-        const iLiked=likeData?.likedBy?.includes(currentCode)||false;
-        return '<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+'</span><p style="font-size:12px;color:#555;margin:4px 0 6px;line-height:1.5">'+esc(c.text)+'</p><button class="like-btn '+(iLiked?'liked':'')+'" onclick="likeComment(\''+art.id+'\',\''+c.clasa+'\')" style="font-size:11px;padding:3px 10px">👍 Susțin '+likeCount+'</button></div>';
-      }).join(''):'<p style="font-size:12px;color:#aaa">Niciun comentariu încă.</p>';
-      body=`<div class="art-body">
-        <div class="two-col">
-          <div class="col-actual"><p class="col-label actual">📄 Text actual</p><p class="col-text">${esc(art.actual)}</p></div>
-          <div class="col-propus"><p class="col-label propus">✏️ Text propus</p><p class="col-text">${esc(art.propus)}</p></div>
-        </div>
-        ${!isSubmitted?`<div class="vote-row"><button class="${btnDa}" onclick="voteArticle('${art.id}','da')">✓ De acord cu propunerea</button><button class="${btnNu}" onclick="voteArticle('${art.id}','nu')">✗ Nu sunt de acord</button></div>`:(vote?`<div class="tag ${vote==='da'?'tag-da':'tag-nu'}" style="padding:8px 14px;font-size:13px;margin:12px 0;display:inline-block">Votul tău: ${vote==='da'?'✓ De acord':'✗ Nu sunt de acord'}</div>`:'')}
-        <div style="margin-bottom:12px">
-          <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">💬 Propunere / Comentariu (opțional)</label>
-          ${(()=>{
-            const isEditing = window._editingComment === art.id;
-            const hasComment = !!myComments[art.id];
-            if (isSubmitted && hasComment) return `<div style="background:#f9f9f9;border-radius:8px;padding:10px 12px;border-left:3px solid #ccc"><p style="font-size:12px;color:#555;line-height:1.5">${esc(myComments[art.id])}</p></div>`;
-            if (isSubmitted && !hasComment) return `<p style="font-size:12px;color:#aaa;font-style:italic">Nu ai lăsat niciun comentariu.</p>`;
-            if (!isSubmitted && hasComment && !isEditing) return `<div style="background:#f0f4f8;border-radius:8px;padding:10px 12px;margin-bottom:6px;border-left:3px solid #534AB7"><p style="font-size:12px;color:#333;line-height:1.5;margin-bottom:8px">${esc(myComments[art.id])}</p><div style="display:flex;gap:6px"><button class="btn-edit" onclick="editMyComment('${art.id}')">✏️ Editează</button><button class="btn-danger" onclick="deleteMyComment('${art.id}')">🗑️ Șterge</button></div></div>`;
-            if (!isSubmitted && (isEditing || !hasComment)) return `<textarea id="edit-textarea-${art.id}" rows="2" placeholder="Scrieți propunerea de modificare sau orice observație..." oninput="commentArticle('${art.id}',this.value)">${esc(myComments[art.id]||'')}</textarea>${isEditing ? `<div style="display:flex;gap:6px;margin-top:6px"><button class="btn-primary" onclick="saveEditedComment('${art.id}')" style="font-size:12px;padding:5px 12px">💾 Salvează</button><button onclick="cancelEditComment()" style="font-size:12px;padding:5px 12px">✕ Anulează</button></div>` : ''}`;
-            return '';
-          })()}
-        </div>
-        <div class="stats-box">
-          <p style="font-size:12px;font-weight:700;color:#534AB7;margin-bottom:8px">📊 Cum au votat ceilalți reprezentanți</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 Comentarii: ${comments.length}</span></div>
-          ${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii (${stats.total} voturi exprimate)</p>`:''}
-          <div style="margin-top:10px">${commHtml}</div>
-        </div>
-      </div>`;
-    }
-    return `<div class="${cardClass}"><div class="art-header" onclick="toggleArticle('${art.id}')"><span class="tag tag-info" style="min-width:36px;text-align:center">${idx+1}/${ARTICLES.length}</span><span style="flex:1;font-size:14px;font-weight:600">${esc(art.title)}</span>${art.isNew?'<span class="tag tag-new">NOU</span>':''}${vote?'<span style="font-size:16px">'+(vote==='da'?'✅':'❌')+'</span>':''}<span style="color:#bbb;font-size:14px">${isOpen?'▲':'▼'}</span></div>${body}</div>`;
-  }).join('');
-  updateProgress();
-}
-
-function renderNewArticles() {
-  const list=document.getElementById('new-articles-list');
-  if (!list) return;
-  if (!newArticles.length) { list.innerHTML='<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Nu există propuneri încă. Fii primul care propune!</p>'; return; }
-  list.innerHTML=newArticles.map(art=>{
-    const isOwn=art.proposedBy===currentCode, voted=art.votes?.includes(currentCode), vCount=art.votes?.length||0;
-    const isEditing = window._editingNewArt === art.id;
-    return `<div class="art-card" style="padding:16px">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-        <div style="flex:1"><span class="tag tag-new" style="margin-bottom:6px;display:inline-block">Propunere nouă</span>
-        ${isEditing ? '' : `<h3 style="font-size:14px;font-weight:700">${esc(art.title)}</h3>`}
-        <p style="font-size:12px;color:#888;margin-top:3px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong></p></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">${isOwn && !isEditing ?`<button class="btn-edit" onclick="editNewArticle('${art.id}')">✏️ Editează</button><button class="btn-danger" onclick="deleteNewArticle('${art.id}')">🗑️ Șterge</button>`:''}
-        </div>
-      </div>
-      ${isEditing ? `
-        <div style="margin-bottom:10px">
-          <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Titlu</label>
-          <input id="edit-new-title-${art.id}" value="${esc(art.title)}" style="margin-bottom:8px">
-          <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Text</label>
-          <textarea id="edit-new-text-${art.id}" rows="4" style="resize:vertical">${esc(art.text)}</textarea>
-          <div style="display:flex;gap:6px;margin-top:8px">
-            <button class="btn-primary" onclick="saveEditedNewArticle('${art.id}')" style="font-size:12px;padding:6px 14px">💾 Salvează</button>
-            <button onclick="cancelEditNewArticle()" style="font-size:12px;padding:6px 14px">✕ Anulează</button>
-          </div>
-        </div>
-      ` : `<p style="font-size:13px;color:#4a5568;line-height:1.7;white-space:pre-line;background:#f7f9fc;border-radius:8px;padding:12px;margin-bottom:12px">${esc(art.text)}</p>`}
-      ${!isEditing ? `<button class="like-btn ${voted?'liked':''}" onclick="voteNewArticle('${art.id}',${JSON.stringify(art.votes||[])})">👍 Susțin această propunere &nbsp;<strong>${vCount}</strong></button>
-      ${voted?'<span style="font-size:11px;color:#534AB7;margin-left:8px">✓ Ai susținut această propunere</span>':''}` : ''}
-    </div>`;
-  }).join('');
-}
-
-function renderStats() {
-  const total=Object.keys(allResponses).length, submitted=Object.values(allResponses).filter(e=>e.submitted).length;
-  document.getElementById('stats-summary').innerHTML=[
-    {l:'Total clase participante',v:total,c:'#534AB7'},{l:'Răspunsuri finalizate',v:submitted,c:'#3B6D11'},
-    {l:'În progres',v:total-submitted,c:'#854F0B'},{l:'Total clase C.R.P.',v:34,c:'#185FA5'}
-  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
-  document.getElementById('stats-list').innerHTML=ARTICLES.map(art=>{
-    const stats=getStats(art.id),comments=getComments(art.id),pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
-    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700;margin-bottom:10px">${esc(art.title)}</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 ${comments.length} comentarii</span></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px">'+comments.map(c=>{const likeData=Object.values(commentLikes).find(l=>l.artId===art.id&&l.commentCode===c.clasa);const likeCount=likeData?.likedBy?.length||0;return '<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span>'+(likeCount>0?' <span class="tag tag-info" style="margin-left:6px">👍 '+likeCount+'</span>':'')+'</div>';}).join('')+'</div>':''}</div>`;
-  }).join('');
-}
-
-function renderAdmin() {
-  const total=Object.keys(allResponses).length, submitted=Object.values(allResponses).filter(e=>e.submitted).length;
-  document.getElementById('admin-overview').innerHTML=[
-    {l:'Clase înregistrate',v:total,c:'#534AB7'},{l:'Răspunsuri finalizate',v:submitted,c:'#3B6D11'},
-    {l:'În progres',v:total-submitted,c:'#854F0B'},{l:'Total clase C.R.P.',v:34,c:'#185FA5'}
-  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
-  document.getElementById('admin-articles').innerHTML=ARTICLES.map(art=>{
-    const stats=getStats(art.id),comments=getComments(art.id),pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
-    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><div style="display:flex;gap:8px"><span class="tag tag-da">✓ ${stats.da}</span><span class="tag tag-nu">✗ ${stats.nu}</span></div></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii (${stats.total} voturi)</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px"><p style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">Comentarii ('+comments.length+'):</p>'+comments.map(c=>{const likeData=Object.values(commentLikes).find(l=>l.artId===art.id&&l.commentCode===c.clasa);const likeCount=likeData?.likedBy?.length||0;return '<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span>'+(likeCount>0?' <span class="tag tag-info" style="margin-left:6px">👍 '+likeCount+' susțineri</span>':'')+'</div>';}).join('')+'</div>':''}</div>`;
-  }).join('');
-  renderAdminNewArticles();
-  document.getElementById('admin-classes').innerHTML=Object.entries(allResponses).map(([code,e])=>
-    `<div class="stat-card" style="display:flex;align-items:center;justify-content:space-between"><div><p style="font-size:12px;font-weight:700;color:#534AB7">${code}</p><p style="font-size:11px;color:#888">${e.clasa}</p></div><span style="font-size:18px">${e.submitted?'✅':'⏳'}</span></div>`
-  ).join('')||'<p style="font-size:13px;color:#aaa">Niciun răspuns încă.</p>';
-}
-
-function renderAdminNewArticles() {
-  const el=document.getElementById('admin-new-articles');
-  if (!el) return;
-  if (!newArticles.length) { el.innerHTML='<p style="color:#aaa;font-size:13px">Nu există propuneri de articole noi.</p>'; return; }
-  el.innerHTML=newArticles.map(art=>`<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><p style="font-size:11px;color:#888;margin:3px 0 8px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong> · 👍 ${art.votes?.length||0} susțineri</p><p style="font-size:12px;color:#555;line-height:1.6;white-space:pre-line">${esc(art.text)}</p></div>`).join('');
-}
-</script>
 <script type="application/json" id="articles-data">
 [
   {
@@ -672,6 +291,400 @@ function renderAdminNewArticles() {
     "propus": "(1) La propunerea membrilor C.R.P., aplicându-se principiul majorității în luarea deciziilor, Regulamentul de Organizare și Funcționare poate fi revizuit și modificat de cel puțin jumătate plus 1 din membrii C.R.P. în cadrul ședințelor online/cu prezență fizică sau prin sondaj pe grupul online.\n(2) Prezentul Regulament este obligatoriu pentru toți membrii C.R.P. Președinții comitetelor de părinți vor aduce la cunoștința părinților fiecărei clase, prevederile prezentului Regulament.\n(3) Regulamentul de Organizare și Funcționare al C.R.P. din cadrul C.N.G.Ș. a fost dezbătut și aprobat în ședința C.R.P. din data de 11.05.2026."
   }
 ]
+// Inregistreaza toate functiile global
+window._registerFns({
+  doLogin, doAdmin, saveDraft, doSubmit, switchTab, toggleArticle,
+  voteArticle, commentArticle, submitNewArticle, voteNewArticle,
+  deleteNewArticle, editNewArticle, saveEditedNewArticle, cancelEditNewArticle,
+  likeComment, editMyComment, deleteMyComment, saveEditedComment,
+  cancelEditComment, showScreen
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+// Verificare data limita
+const DEADLINE = new Date('2026-05-25T23:59:59');
+const isExpired = () => new Date() > DEADLINE;
+
+// Actualizeaza bannerul daca e expirat
+if (isExpired()) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const b = document.getElementById('deadline-banner');
+    if (b) {
+      b.style.background = 'linear-gradient(135deg,#A32D2D,#c53030)';
+      b.innerHTML = '🔒 Consultare ROF C.R.P. &nbsp;|&nbsp; <span style="opacity:0.9">Consultarea s-a <strong>încheiat</strong> pe 25 mai 2026</span>';
+    }
+  });
+}
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDvlXhBKw3pwHGneNq7olgEc7b4SqjiuqQ",
+  authDomain: "puterea-vocii-tale.firebaseapp.com",
+  projectId: "puterea-vocii-tale",
+  storageBucket: "puterea-vocii-tale.firebasestorage.app",
+  messagingSenderId: "60750339466",
+  appId: "1:60750339466:web:a6bbdf57a3b4273e10fc73"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const ADMIN_PASS = "130629";
+const CODES = {
+  "CRP-9A":"Cls. a IX-a A","CRP-9B":"Cls. a IX-a B","CRP-9C":"Cls. a IX-a C","CRP-9D":"Cls. a IX-a D","CRP-9E":"Cls. a IX-a E","CRP-9F":"Cls. a IX-a F","CRP-9G":"Cls. a IX-a G","CRP-9H":"Cls. a IX-a H","CRP-9I":"Cls. a IX-a I",
+  "CRP-10A":"Cls. a X-a A","CRP-10B":"Cls. a X-a B","CRP-10C":"Cls. a X-a C","CRP-10D":"Cls. a X-a D","CRP-10E":"Cls. a X-a E","CRP-10F":"Cls. a X-a F","CRP-10G":"Cls. a X-a G","CRP-10H":"Cls. a X-a H",
+  "CRP-11A":"Cls. a XI-a A","CRP-11B":"Cls. a XI-a B","CRP-11C":"Cls. a XI-a C","CRP-11D":"Cls. a XI-a D","CRP-11E":"Cls. a XI-a E","CRP-11F":"Cls. a XI-a F","CRP-11G":"Cls. a XI-a G","CRP-11H":"Cls. a XI-a H",
+  "CRP-12A":"Cls. a XII-a A","CRP-12B":"Cls. a XII-a B","CRP-12C":"Cls. a XII-a C","CRP-12D":"Cls. a XII-a D","CRP-12E":"Cls. a XII-a E","CRP-12F":"Cls. a XII-a F","CRP-12G":"Cls. a XII-a G","CRP-12H":"Cls. a XII-a H","CRP-12I":"Cls. a XII-a I",
+  "CRP-EX1":"Reprezentant Special 1","CRP-EX2":"Reprezentant Special 2"
+};
+
+const ARTICLES = JSON.parse(document.getElementById('articles-data').textContent);
+
+let currentCode=null, myVotes={}, myComments={}, isSubmitted=false, expandedArt=null, commentLikes={};
+window._editingComment = null;
+window._editingNewArt = null;
+let allResponses={}, newArticles=[], unsubResp=null, unsubNew=null, unsubCommentLikes=null;
+
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+}
+
+async function doLogin() {
+  const val = document.getElementById('code-input').value.trim().toUpperCase();
+  const err = document.getElementById('code-error');
+  if (isExpired()) { err.textContent='Consultarea s-a încheiat pe 25 mai 2026. Voturile nu mai pot fi modificate.'; err.style.display='block'; return; }
+  if (!CODES[val]) { err.textContent='Cod invalid. Verificați codul primit.'; err.style.display='block'; return; }
+  err.style.display='none'; currentCode=val;
+  document.getElementById('loading-main').style.display='block';
+  document.getElementById('main-content').style.display='none';
+  showScreen('main');
+  try {
+    const snap = await db.collection('rof_votes').doc(val).get();
+    if (snap.exists) { const d=snap.data(); myVotes=d.votes||{}; myComments=d.comments||{}; isSubmitted=d.submitted||false; }
+    subscribeAll();
+  } catch(e) { console.error(e); }
+}
+
+function doAdmin() {
+  const val = document.getElementById('admin-input').value;
+  const err = document.getElementById('admin-error');
+  if (val!==ADMIN_PASS) { err.textContent='Parolă incorectă.'; err.style.display='block'; return; }
+  err.style.display='none';
+  document.getElementById('loading-admin').style.display='block';
+  document.getElementById('admin-content').style.display='none';
+  showScreen('admin');
+  subscribeAll(true);
+}
+
+function subscribeAll(isAdmin=false) {
+  if (unsubResp) unsubResp();
+  unsubResp = db.collection('rof_votes').onSnapshot(snap => {
+    allResponses={};
+    snap.forEach(d=>{ allResponses[d.id]=d.data(); });
+    if (isAdmin) { renderAdmin(); document.getElementById('loading-admin').style.display='none'; document.getElementById('admin-content').style.display='block'; }
+    else { document.getElementById('loading-main').style.display='none'; document.getElementById('main-content').style.display='block'; renderMain(); }
+  });
+  if (unsubCommentLikes) unsubCommentLikes();
+  unsubCommentLikes = db.collection('rof_comment_likes').onSnapshot(snap => {
+    commentLikes={};
+    snap.forEach(d=>{ commentLikes[d.id]=d.data(); });
+    if (expandedArt) renderArticles();
+  });
+  if (unsubNew) unsubNew();
+  unsubNew = db.collection('rof_new_articles').onSnapshot(snap => {
+    newArticles=[];
+    snap.forEach(d=>{ newArticles.push({id:d.id,...d.data()}); });
+    newArticles.sort((a,b)=>(b.ts?.seconds||0)-(a.ts?.seconds||0));
+    if (document.getElementById('tab-new')?.style.display!=='none') renderNewArticles();
+    if (isAdmin) renderAdminNewArticles();
+  });
+}
+
+const getStats = artId => {
+  let da=0,nu=0;
+  Object.values(allResponses).forEach(e=>{ if(e.votes?.[artId]==='da') da++; else if(e.votes?.[artId]==='nu') nu++; });
+  return {da,nu,total:da+nu};
+};
+
+const getComments = artId => Object.entries(allResponses)
+  .filter(([,e])=>e.comments?.[artId]?.trim())
+  .map(([code,e])=>({clasa:e.clasa||code,text:e.comments[artId]}));
+
+async function saveDraft() {
+  await db.collection('rof_votes').doc(currentCode).set({votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:firebase.firestore.FieldValue.serverTimestamp()});
+  showMsg('Progresul a fost salvat. Poți continua mai târziu. ✅');
+}
+
+async function doSubmit() {
+  if (!Object.keys(myVotes).length) return;
+  await db.collection('rof_votes').doc(currentCode).set({votes:myVotes,comments:myComments,submitted:true,clasa:CODES[currentCode],ts:firebase.firestore.FieldValue.serverTimestamp()});
+  isSubmitted=true;
+  document.getElementById('submit-area').style.display='none';
+  document.getElementById('submitted-area').style.display='block';
+  document.getElementById('btn-save-draft').style.display='none';
+  showMsg('Răspunsurile tale au fost înregistrate cu succes! ✅');
+  renderArticles();
+}
+
+function showMsg(text) {
+  const el=document.getElementById('save-msg');
+  el.textContent=text; el.style.display='block';
+  setTimeout(()=>el.style.display='none',4000);
+}
+
+function switchTab(name) {
+  ['articles','new','stats'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
+    document.getElementById('tab-btn-'+t).className='tab-btn'+(t===name?' active':'');
+  });
+  if (name==='stats') renderStats();
+  if (name==='new') renderNewArticles();
+}
+
+function toggleArticle(id) { expandedArt=expandedArt===id?null:id; renderArticles(); }
+
+function voteArticle(artId,val) {
+  if (isSubmitted) return;
+  if (myVotes[artId]===val) delete myVotes[artId]; else myVotes[artId]=val;
+  updateProgress(); renderArticles();
+}
+
+function commentArticle(artId,val) { if (!isSubmitted) myComments[artId]=val; }
+
+function editMyComment(artId) {
+  if (isSubmitted) return;
+  window._editingComment = artId;
+  renderArticles();
+}
+
+function saveEditedComment(artId) {
+  const ta = document.getElementById('edit-textarea-' + artId);
+  if (!ta) return;
+  myComments[artId] = ta.value.trim();
+  window._editingComment = null;
+  db.collection('rof_votes').doc(currentCode).set({votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:firebase.firestore.FieldValue.serverTimestamp()});
+  showMsg('Comentariul a fost actualizat. ✅');
+  renderArticles();
+}
+
+function cancelEditComment() { window._editingComment = null; renderArticles(); }
+
+function deleteMyComment(artId) {
+  if (isSubmitted) return;
+  if (!confirm('Ești sigur că vrei să ștergi acest comentariu?')) return;
+  delete myComments[artId];
+  db.collection('rof_votes').doc(currentCode).set({votes:myVotes,comments:myComments,submitted:false,clasa:CODES[currentCode],ts:firebase.firestore.FieldValue.serverTimestamp()});
+  showMsg('Comentariul a fost șters. ✅');
+  renderArticles();
+}
+
+async function submitNewArticle() {
+  const title=document.getElementById('new-art-title').value.trim();
+  const text=document.getElementById('new-art-text').value.trim();
+  const err=document.getElementById('new-art-error');
+  if (!title) { err.textContent='Vă rugăm să introduceți titlul articolului.'; err.style.display='block'; return; }
+  if (!text) { err.textContent='Vă rugăm să introduceți textul articolului.'; err.style.display='block'; return; }
+  err.style.display='none';
+  await db.collection('rof_new_articles').add({title,text,proposedBy:currentCode,clasa:CODES[currentCode],votes:[],ts:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('new-art-title').value='';
+  document.getElementById('new-art-text').value='';
+  showMsg('Propunerea ta a fost trimisă și este vizibilă tuturor! ✅');
+}
+
+async function voteNewArticle(docId,currentVotes) {
+  const already=currentVotes.includes(currentCode);
+  const newV=already?currentVotes.filter(v=>v!==currentCode):[...currentVotes,currentCode];
+  await db.collection('rof_new_articles').doc(docId).update({votes:newV});
+}
+
+async function deleteNewArticle(docId) {
+  if (confirm('Ești sigur că vrei să ștergi această propunere?')) {
+    await db.collection('rof_new_articles').doc(docId).delete();
+    showMsg('Propunerea a fost ștearsă.');
+  }
+}
+
+function editNewArticle(docId) {
+  window._editingNewArt = docId;
+  renderNewArticles();
+}
+
+async function saveEditedNewArticle(docId) {
+  const titleEl = document.getElementById('edit-new-title-' + docId);
+  const textEl = document.getElementById('edit-new-text-' + docId);
+  if (!titleEl || !textEl) return;
+  await db.collection('rof_new_articles').doc(docId).update({title:titleEl.value.trim(),text:textEl.value.trim()});
+  window._editingNewArt = null;
+  showMsg('Propunerea a fost actualizată. ✅');
+}
+
+function cancelEditNewArticle() { window._editingNewArt = null; renderNewArticles(); }
+
+async function likeComment(artId, commentCode) {
+  const likeKey = artId + '_' + commentCode;
+  const ref = db.collection('rof_comment_likes').doc(likeKey);
+  const snap = await ref.get();
+  if (snap.exists) {
+    const likes = snap.data().likedBy || [];
+    if (likes.includes(currentCode)) {
+      await ref.update({ likedBy: firebase.firestore.FieldValue.arrayRemove(currentCode) });
+    } else {
+      await ref.update({ likedBy: firebase.firestore.FieldValue.arrayUnion(currentCode) });
+    }
+  } else {
+    await ref.set({ artId, commentCode, likedBy: [currentCode] });
+  }
+}
+
+function updateProgress() {
+  const voted=Object.keys(myVotes).length;
+  const pct=Math.round((voted/ARTICLES.length)*100);
+  document.getElementById('main-progress').style.width=pct+'%';
+  document.getElementById('header-sub').textContent=CODES[currentCode]+' · '+(isSubmitted?'✅ Finalizat':voted+'/'+ARTICLES.length+' articole votate');
+  const info=document.getElementById('submit-info');
+  if (info) {
+    const rem=ARTICLES.length-voted;
+    info.innerHTML='Ai votat <strong>'+voted+'</strong> din <strong>'+ARTICLES.length+'</strong> articole.'+(rem>0?' <span style="color:#A32D2D">Mai ai '+rem+' nevotate.</span>':' <span style="color:#3B6D11">Toate articolele votate!</span>');
+  }
+}
+
+function renderMain() {
+  updateProgress(); renderArticles();
+  if (isExpired()) {
+    document.getElementById('submit-area').style.display='none';
+    document.getElementById('btn-save-draft').style.display='none';
+    if (!isSubmitted) {
+      document.getElementById('submitted-area').style.display='block';
+      document.getElementById('submitted-area').innerHTML='<div style="font-size:32px;margin-bottom:8px">🔒</div><h3 style="font-size:16px;font-weight:700;color:#A32D2D;margin-bottom:6px">Consultarea s-a încheiat</h3><p style="font-size:13px;color:#666">Termenul limită a fost 25 mai 2026. Voturile nu mai pot fi modificate, dar poți vedea rezultatele în tab-ul Statistici.</p>';
+    }
+    isSubmitted = true;
+  } else if (isSubmitted) {
+    document.getElementById('submit-area').style.display='none';
+    document.getElementById('submitted-area').style.display='block';
+    document.getElementById('btn-save-draft').style.display='none';
+  }
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderArticles() {
+  const list=document.getElementById('articles-list');
+  if (!list) return;
+  list.innerHTML=ARTICLES.map((art,idx)=>{
+    const vote=myVotes[art.id], isOpen=expandedArt===art.id;
+    const stats=getStats(art.id), comments=getComments(art.id);
+    const cardClass='art-card'+(vote==='da'?' voted-da':vote==='nu'?' voted-nu':'');
+    let body='';
+    if (isOpen) {
+      const pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
+      const btnDa='btn-vote'+(vote==='da'?' sel-da':''), btnNu='btn-vote'+(vote==='nu'?' sel-nu':'');
+      const isEditing = window._editingComment === art.id;
+      const hasComment = !!myComments[art.id];
+      let commentSection = '';
+      if (isSubmitted && hasComment) {
+        commentSection = `<div style="background:#f9f9f9;border-radius:8px;padding:10px 12px;border-left:3px solid #ccc"><p style="font-size:12px;color:#555;line-height:1.5">${esc(myComments[art.id])}</p></div>`;
+      } else if (isSubmitted && !hasComment) {
+        commentSection = `<p style="font-size:12px;color:#aaa;font-style:italic">Nu ai lăsat niciun comentariu.</p>`;
+      } else if (!isSubmitted && hasComment && !isEditing) {
+        commentSection = `<div style="background:#f0f4f8;border-radius:8px;padding:10px 12px;margin-bottom:6px;border-left:3px solid #534AB7"><p style="font-size:12px;color:#333;line-height:1.5;margin-bottom:8px">${esc(myComments[art.id])}</p><div style="display:flex;gap:6px"><button class="btn-edit" onclick="editMyComment('${art.id}')">✏️ Editează</button><button class="btn-danger" onclick="deleteMyComment('${art.id}')">🗑️ Șterge</button></div></div>`;
+      } else if (!isSubmitted && (isEditing || !hasComment)) {
+        commentSection = `<textarea id="edit-textarea-${art.id}" rows="2" placeholder="Scrieți propunerea de modificare sau orice observație..." oninput="commentArticle('${art.id}',this.value)">${esc(myComments[art.id]||'')}</textarea>`;
+        if (isEditing) commentSection += `<div style="display:flex;gap:6px;margin-top:6px"><button class="btn-primary" onclick="saveEditedComment('${art.id}')" style="font-size:12px;padding:5px 12px">💾 Salvează</button><button onclick="cancelEditComment()" style="font-size:12px;padding:5px 12px">✕ Anulează</button></div>`;
+      }
+      const commHtml=comments.length>0?comments.map(c=>{
+        const likeData=Object.values(commentLikes).find(l=>l.artId===art.id&&l.commentCode===c.clasa);
+        const likeCount=likeData?.likedBy?.length||0;
+        const iLiked=likeData?.likedBy?.includes(currentCode)||false;
+        return `<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">${esc(c.clasa)}</span><p style="font-size:12px;color:#555;margin:4px 0 6px;line-height:1.5">${esc(c.text)}</p><button class="like-btn ${iLiked?'liked':''}" onclick="likeComment('${art.id}','${c.clasa}')" style="font-size:11px;padding:3px 10px">👍 Susțin ${likeCount}</button></div>`;
+      }).join(''):'<p style="font-size:12px;color:#aaa">Niciun comentariu încă.</p>';
+      body=`<div class="art-body">
+        <div class="two-col">
+          <div class="col-actual"><p class="col-label actual">📄 Text actual</p><p class="col-text">${esc(art.actual)}</p></div>
+          <div class="col-propus"><p class="col-label propus">✏️ Text propus</p><p class="col-text">${esc(art.propus)}</p></div>
+        </div>
+        ${!isSubmitted?`<div class="vote-row"><button class="${btnDa}" onclick="voteArticle('${art.id}','da')">✓ De acord cu propunerea</button><button class="${btnNu}" onclick="voteArticle('${art.id}','nu')">✗ Nu sunt de acord</button></div>`:(vote?`<div class="tag ${vote==='da'?'tag-da':'tag-nu'}" style="padding:8px 14px;font-size:13px;margin:12px 0;display:inline-block">Votul tău: ${vote==='da'?'✓ De acord':'✗ Nu sunt de acord'}</div>`:'')}
+        <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">💬 Propunere / Comentariu (opțional)</label>${commentSection}</div>
+        <div class="stats-box">
+          <p style="font-size:12px;font-weight:700;color:#534AB7;margin-bottom:8px">📊 Cum au votat ceilalți reprezentanți</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 Comentarii: ${comments.length}</span></div>
+          ${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii (${stats.total} voturi exprimate)</p>`:''}
+          <div style="margin-top:10px">${commHtml}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="${cardClass}"><div class="art-header" onclick="toggleArticle('${art.id}')"><span class="tag tag-info" style="min-width:36px;text-align:center">${idx+1}/${ARTICLES.length}</span><span style="flex:1;font-size:14px;font-weight:600">${esc(art.title)}</span>${art.isNew?'<span class="tag tag-new">NOU</span>':''}${vote?'<span style="font-size:16px">'+(vote==='da'?'✅':'❌')+'</span>':''}<span style="color:#bbb;font-size:14px">${isOpen?'▲':'▼'}</span></div>${body}</div>`;
+  }).join('');
+  updateProgress();
+}
+
+function renderNewArticles() {
+  const list=document.getElementById('new-articles-list');
+  if (!list) return;
+  if (!newArticles.length) { list.innerHTML='<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Nu există propuneri încă. Fii primul care propune!</p>'; return; }
+  list.innerHTML=newArticles.map(art=>{
+    const isOwn=art.proposedBy===currentCode, voted=art.votes?.includes(currentCode), vCount=art.votes?.length||0;
+    const isEditing = window._editingNewArt === art.id;
+    return `<div class="art-card" style="padding:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="flex:1"><span class="tag tag-new" style="margin-bottom:6px;display:inline-block">Propunere nouă</span>
+        ${isEditing?'':`<h3 style="font-size:14px;font-weight:700">${esc(art.title)}</h3>`}
+        <p style="font-size:12px;color:#888;margin-top:3px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong></p></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${isOwn&&!isEditing?`<button class="btn-edit" onclick="editNewArticle('${art.id}')">✏️ Editează</button><button class="btn-danger" onclick="deleteNewArticle('${art.id}')">🗑️ Șterge</button>`:''}
+        </div>
+      </div>
+      ${isEditing?`<div style="margin-bottom:10px">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Titlu</label>
+        <input id="edit-new-title-${art.id}" value="${esc(art.title)}" style="margin-bottom:8px">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Text</label>
+        <textarea id="edit-new-text-${art.id}" rows="4" style="resize:vertical">${esc(art.text)}</textarea>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn-primary" onclick="saveEditedNewArticle('${art.id}')" style="font-size:12px;padding:6px 14px">💾 Salvează</button>
+          <button onclick="cancelEditNewArticle()" style="font-size:12px;padding:6px 14px">✕ Anulează</button>
+        </div>
+      </div>`:`<p style="font-size:13px;color:#4a5568;line-height:1.7;white-space:pre-line;background:#f7f9fc;border-radius:8px;padding:12px;margin-bottom:12px">${esc(art.text)}</p>`}
+      ${!isEditing?`<button class="like-btn ${voted?'liked':''}" onclick="voteNewArticle('${art.id}',${JSON.stringify(art.votes||[])})">👍 Susțin această propunere &nbsp;<strong>${vCount}</strong></button>
+      ${voted?'<span style="font-size:11px;color:#534AB7;margin-left:8px">✓ Ai susținut această propunere</span>':''}`:''}</div>`;
+  }).join('');
+}
+
+function renderStats() {
+  const total=Object.keys(allResponses).length, submitted=Object.values(allResponses).filter(e=>e.submitted).length;
+  document.getElementById('stats-summary').innerHTML=[
+    {l:'Total clase participante',v:total,c:'#534AB7'},{l:'Răspunsuri finalizate',v:submitted,c:'#3B6D11'},
+    {l:'În progres',v:total-submitted,c:'#854F0B'},{l:'Total clase C.R.P.',v:34,c:'#185FA5'}
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
+  document.getElementById('stats-list').innerHTML=ARTICLES.map(art=>{
+    const stats=getStats(art.id),comments=getComments(art.id),pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
+    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700;margin-bottom:10px">${esc(art.title)}</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${stats.total>0?'8px':'0'}"><span class="tag tag-da">✓ De acord: ${stats.da}</span><span class="tag tag-nu">✗ Nu sunt de acord: ${stats.nu}</span><span class="tag tag-info">💬 ${comments.length} comentarii</span></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px">'+comments.map(c=>{const likeData=Object.values(commentLikes).find(l=>l.artId===art.id&&l.commentCode===c.clasa);const likeCount=likeData?.likedBy?.length||0;return '<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span>'+(likeCount>0?' <span class="tag tag-info" style="margin-left:6px">👍 '+likeCount+'</span>':'')+'</div>';}).join('')+'</div>':''}</div>`;
+  }).join('');
+}
+
+function renderAdmin() {
+  const total=Object.keys(allResponses).length, submitted=Object.values(allResponses).filter(e=>e.submitted).length;
+  document.getElementById('admin-overview').innerHTML=[
+    {l:'Clase înregistrate',v:total,c:'#534AB7'},{l:'Răspunsuri finalizate',v:submitted,c:'#3B6D11'},
+    {l:'În progres',v:total-submitted,c:'#854F0B'},{l:'Total clase C.R.P.',v:34,c:'#185FA5'}
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
+  document.getElementById('admin-articles').innerHTML=ARTICLES.map(art=>{
+    const stats=getStats(art.id),comments=getComments(art.id),pct=stats.total>0?Math.round((stats.da/stats.total)*100):0;
+    return `<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><div style="display:flex;gap:8px"><span class="tag tag-da">✓ ${stats.da}</span><span class="tag tag-nu">✗ ${stats.nu}</span></div></div>${stats.total>0?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><p style="font-size:11px;color:#aaa;margin-top:3px">${pct}% în favoarea propunerii (${stats.total} voturi)</p>`:'<p style="font-size:12px;color:#aaa">Niciun vot încă.</p>'}${comments.length>0?'<div style="margin-top:10px;border-top:1px solid #eee;padding-top:10px"><p style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">Comentarii ('+comments.length+'):</p>'+comments.map(c=>{const likeData=Object.values(commentLikes).find(l=>l.artId===art.id&&l.commentCode===c.clasa);const likeCount=likeData?.likedBy?.length||0;return '<div class="comment-item"><span style="font-size:11px;font-weight:700;color:#534AB7">'+esc(c.clasa)+':</span> <span style="font-size:12px;color:#555">'+esc(c.text)+'</span>'+(likeCount>0?' <span class="tag tag-info" style="margin-left:6px">👍 '+likeCount+' susțineri</span>':'')+'</div>';}).join('')+'</div>':''}</div>`;
+  }).join('');
+  renderAdminNewArticles();
+  document.getElementById('admin-classes').innerHTML=Object.entries(allResponses).map(([code,e])=>
+    `<div class="stat-card" style="display:flex;align-items:center;justify-content:space-between"><div><p style="font-size:12px;font-weight:700;color:#534AB7">${code}</p><p style="font-size:11px;color:#888">${e.clasa}</p></div><span style="font-size:18px">${e.submitted?'✅':'⏳'}</span></div>`
+  ).join('')||'<p style="font-size:13px;color:#aaa">Niciun răspuns încă.</p>';
+}
+
+function renderAdminNewArticles() {
+  const el=document.getElementById('admin-new-articles');
+  if (!el) return;
+  if (!newArticles.length) { el.innerHTML='<p style="color:#aaa;font-size:13px">Nu există propuneri de articole noi.</p>'; return; }
+  el.innerHTML=newArticles.map(art=>`<div class="art-card" style="padding:14px 16px;margin-bottom:8px"><p style="font-size:13px;font-weight:700">${esc(art.title)}</p><p style="font-size:11px;color:#888;margin:3px 0 8px">Propus de: <strong style="color:#534AB7">${esc(art.clasa)}</strong> · 👍 ${art.votes?.length||0} susțineri</p><p style="font-size:12px;color:#555;line-height:1.6;white-space:pre-line">${esc(art.text)}</p></div>`).join('');
+}
+
+}); // end DOMContentLoaded
 </script>
 </body>
 </html>
