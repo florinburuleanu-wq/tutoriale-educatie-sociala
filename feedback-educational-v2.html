@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedback Educațional — Clasa a X-a G</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#222;min-height:100vh}
+.screen{display:none}.screen.active{display:block}
+input,textarea{font-size:14px;color:#222;background:#fff;border:1px solid #ccd;border-radius:8px;padding:8px 12px;width:100%;outline:none;transition:border 0.2s;font-family:inherit}
+input:focus,textarea:focus{border-color:#2E7D32}
+button{cursor:pointer;border-radius:8px;border:1px solid #ccd;background:#fff;color:#222;font-size:14px;padding:8px 16px;transition:all 0.2s;font-family:inherit}
+button:hover{background:#f0f4f0}
+.btn-primary{background:#2E7D32;border-color:#2E7D32;color:#fff;font-weight:600}
+.btn-primary:hover{background:#1B5E20}
+.btn-danger{background:#E24B4A;border-color:#E24B4A;color:#fff;font-size:12px;padding:5px 10px}
+.btn-edit{background:#E6F1FB;border-color:#185FA5;color:#185FA5;font-size:12px;padding:5px 10px}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600}
+.tag-da{background:#EAF3DE;color:#27500A}
+.tag-nu{background:#FCEBEB;color:#501313}
+.tag-info{background:#E6F1FB;color:#0C447C}
+.progress-bar{height:5px;background:#dde;border-radius:99px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:#2E7D32;border-radius:99px;transition:width 0.4s}
+.section-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.section-card.completed{border-color:#2E7D32}
+.section-header{padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;user-select:none}
+.section-header:hover{background:#fafafa}
+.section-body{padding:0 16px 16px;border-top:1px solid #eee}
+.question-block{margin:14px 0;padding:14px;background:#f7f9fc;border-radius:10px}
+.question-text{font-size:13px;font-weight:600;color:#2d3748;margin-bottom:10px;line-height:1.5}
+.radio-option{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;background:#fff;transition:all 0.2s;font-size:13px;margin-bottom:5px}
+.radio-option:hover{border-color:#2E7D32;background:#f0fff4}
+.radio-option.selected{border-color:#2E7D32;background:#EAF3DE;font-weight:600}
+.flower-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:16px 0}
+.flower-btn{padding:12px 8px;border-radius:12px;border:2px solid #97C459;background:#f0fff4;color:#1B5E20;font-weight:700;font-size:13px;cursor:pointer;text-align:center;transition:all 0.2s}
+.flower-btn:hover{background:#c6f6d5;border-color:#2E7D32;transform:scale(1.03)}
+.flower-btn.taken{background:#f5f5f5;border-color:#ddd;color:#aaa;cursor:not-allowed;transform:none}
+.header-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 16px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.tab-row{display:flex;gap:4px;background:#f0f4f8;border-radius:10px;padding:4px;margin-bottom:16px}
+.tab-btn{flex:1;padding:9px;border:none;background:transparent;font-size:12px;color:#888;border-radius:7px;font-weight:500}
+.tab-btn.active{background:#fff;color:#222;font-weight:700;border:1px solid #dde}
+.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px}
+.deadline-banner{background:linear-gradient(135deg,#2E7D32,#1B5E20);color:#fff;padding:10px 16px;text-align:center;font-size:13px;font-weight:600}
+.info-box{background:#f0fff4;border:1px solid #97C459;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#1B5E20;line-height:1.8}
+.error-msg{color:#A32D2D;font-size:12px;margin-top:6px}
+.loading{text-align:center;padding:60px 20px;color:#888}
+</style>
+</head>
+<body>
+
+<div class="deadline-banner" id="deadline-banner">
+  🌸 Feedback Educațional — Clasa a X-a G &nbsp;|&nbsp; <span style="opacity:0.9">Termen limită: <strong>25 mai 2026</strong></span>
+</div>
+
+<!-- SCREEN 1: INTRODUCERE PRENUME -->
+<div id="screen-prenume" class="screen active" style="min-height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="max-width:480px;width:100%">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:48px;margin-bottom:12px">🌸</div>
+      <h1 style="font-size:20px;font-weight:700;margin-bottom:6px">Feedback Educațional</h1>
+      <p style="font-size:14px;color:#2E7D32;font-weight:600">Clasa a X-a G — An școlar 2025–2026</p>
+    </div>
+
+    <div class="info-box">
+      <strong>📋 Cum funcționează:</strong><br>
+      1. Introduceți prenumele elevului și inițiala numelui de familie (ex: <code style="background:#d4edda;padding:1px 5px;border-radius:4px">Andrei M.</code>) pentru a vă alege un nume de cod cu care vă veți loga pe platformă<br>
+      2. Alegeți o floare disponibilă din lista afișată — aceasta va fi codul dumneavoastră unic cu care vă logați pe platformă<br>
+      3. Completați feedback-ul pentru fiecare profesor în parte<br>
+      4. La final apăsați „Finalizează și trimite" o singură dată<br><br>
+      📌 Feedback-ul este <strong>anonim</strong> — răspunsurile celorlalți apar doar cu numele florii alese, fără nicio altă informație.<br>
+      📌 Odată aleasă floarea, vă puteți loga ulterior <strong>doar cu numele florii alese</strong>. Puteți salva progresul și reveni oricând pentru a continua. <strong>După ce ați apăsat „Finalizează și trimite", nu mai puteți reveni asupra răspunsurilor.</strong><br>
+      📌 Puteți oferi feedback <strong>doar pentru profesorii doriți</strong> — nu este obligatorie completarea tuturor secțiunilor.<br>
+      📌 Pentru profesoarele care predau mai multe discipline la clasă, puteți oferi feedback <strong>pentru fiecare materie în parte</strong> (recomandat) sau doar pentru materiile dorite.
+    </div>
+
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:24px">
+      <label style="font-size:13px;color:#555;display:block;margin-bottom:6px;font-weight:600">Prenumele elevului și inițiala numelui</label>
+      <input id="prenume-input" placeholder="ex: Andrei M." style="margin-bottom:10px;font-size:15px" onkeydown="if(event.key==='Enter')checkPrenume()">
+      <div id="prenume-error" class="error-msg" style="display:none"></div>
+      <button class="btn-primary" onclick="checkPrenume()" style="width:100%;padding:11px;margin-top:6px">Continuă →</button>
+    </div>
+
+    <div style="background:#f7f9fc;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:12px">
+      <p style="font-size:12px;color:#999;margin-bottom:8px;font-weight:600">ADMINISTRARE</p>
+      <div style="display:flex;gap:8px">
+        <input id="admin-input" type="password" placeholder="Parolă admin" onkeydown="if(event.key==='Enter')doAdmin()">
+        <button onclick="doAdmin()" style="white-space:nowrap">Admin →</button>
+      </div>
+      <div id="admin-error" class="error-msg" style="display:none"></div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:12px;text-align:center">
+      <p style="font-size:12px;color:#666;margin-bottom:8px">Ai ales deja o floare? Logează-te direct:</p>
+      <div style="display:flex;gap:8px">
+        <input id="flower-login-input" placeholder="Numele florii tale (ex: LAVANDA)" style="font-family:monospace;text-transform:uppercase;font-size:14px" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')loginWithFlower()">
+        <button onclick="loginWithFlower()" style="white-space:nowrap;background:#2E7D32;color:#fff;border-color:#2E7D32">Intră →</button>
+      </div>
+      <div id="flower-login-error" class="error-msg" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: ALEGERE FLOARE -->
+<div id="screen-flori" class="screen" style="min-height:calc(100vh - 40px);padding:24px">
+  <div style="max-width:560px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:24px">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Alegeți codul dumneavoastră</h2>
+      <p id="flori-subtitle" style="font-size:13px;color:#666"></p>
+    </div>
+    <div style="background:#fff9e6;border:1px solid #f0d080;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#7a5c00">
+      <strong>Atenție:</strong> Odată aleasă floarea, aceasta devine codul dumneavoastră permanent. Florile gri au fost deja alese de alți părinți.
+    </div>
+    <div class="flower-grid" id="flower-grid"></div>
+    <button onclick="showScreen('prenume')" style="width:100%;padding:10px;margin-top:8px;font-size:13px">← Înapoi</button>
+  </div>
+</div>
+
+<!-- SCREEN MAIN -->
+<div id="screen-main" class="screen">
+  <div class="header-bar">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <p style="font-size:15px;font-weight:700">Feedback Educațional — Cls. a X-a G</p>
+        <p id="header-sub" style="font-size:12px;color:#666"></p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="btn-save-draft" onclick="saveDraft()" style="font-size:12px;padding:6px 12px">💾 Salvează</button>
+        <button onclick="showScreen('prenume')" style="font-size:12px;padding:6px 12px">← Ieșire</button>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="main-progress" style="width:0%"></div></div>
+  </div>
+  <div id="save-msg" style="background:#EAF3DE;color:#27500A;padding:10px 16px;text-align:center;font-size:13px;font-weight:600;display:none"></div>
+  <div id="loading-main" class="loading">Se încarcă... ⏳</div>
+  <div id="main-content" style="display:none;padding:16px">
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-btn-feedback" onclick="switchTab('feedback')">📝 Feedback</button>
+      <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')">📊 Statistici</button>
+    </div>
+    <div id="tab-feedback">
+      <div id="sections-list"></div>
+      <div id="submit-area" style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;text-align:center;margin-top:8px">
+        <p id="submit-info" style="font-size:13px;color:#666;margin-bottom:14px"></p>
+        <button class="btn-primary" onclick="doSubmit()" style="padding:12px 32px;font-size:15px">✅ Finalizează și trimite feedback-ul</button>
+        <p style="font-size:11px;color:#aaa;margin-top:8px">După ce ați apăsat acest buton, nu mai puteți reveni asupra răspunsurilor.</p>
+      </div>
+      <div id="submitted-area" style="display:none;background:#EAF3DE;border:2px solid #97C459;border-radius:14px;padding:24px;text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">✅</div>
+        <h3 style="font-size:16px;font-weight:700;color:#27500A;margin-bottom:6px">Feedback-ul tău a fost înregistrat!</h3>
+        <p style="font-size:13px;color:#3B6D11">Mulțumim! Poți vedea statisticile în tab-ul „📊 Statistici".</p>
+      </div>
+    </div>
+    <div id="tab-stats" style="display:none">
+      <div id="stats-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px"></div>
+      <div id="stats-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN ADMIN -->
+<div id="screen-admin" class="screen">
+  <div class="header-bar">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <p style="font-size:15px;font-weight:700">🛡️ Admin — Feedback Cls. a X-a G</p>
+        <p style="font-size:12px;color:#666">Colegiul Național „Gheorghe Șincai"</p>
+      </div>
+      <button onclick="showScreen('prenume')" style="font-size:12px;padding:6px 12px">← Ieșire</button>
+    </div>
+  </div>
+  <div id="loading-admin" class="loading">Se încarcă... ⏳</div>
+  <div id="admin-content" style="display:none;padding:16px">
+    <div id="admin-overview" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:24px"></div>
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">Asociere prenume — floare</h2>
+    <div id="admin-associations" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:24px"></div>
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">Răspunsuri per profesor</h2>
+    <div id="admin-sections"></div>
+  </div>
+</div>
+
+<script type="application/json" id="sections-data">
+[
+  {"id":"diriginta","title":"Dirigintă","teacher":"Andreea Mihaela Delea","type":"diriginta","questions":[
+    {"id":"q1","text":"Considerați că diriginta a menținut o comunicare eficientă și transparentă cu părinții pe parcursul acestui an școlar?","type":"scale"},
+    {"id":"q2","text":"Diriginta s-a implicat activ în rezolvarea problemelor și nevoilor elevilor clasei?","type":"scale"},
+    {"id":"q3","text":"Considerați că diriginta a contribuit la crearea unui climat pozitiv și sigur în colectivul clasei?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți în activitatea dirigintelui? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să aibă același diriginte?","type":"final"}
+  ]},
+  {"id":"romana","title":"Limba și literatura română","teacher":"Andreea Mihaela Delea","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Limba și literatura română a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Limba și literatura română? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Limba și literatura română?","type":"final"}
+  ]},
+  {"id":"consiliere","title":"Consiliere și orientare (Dirigenție)","teacher":"Andreea Mihaela Delea","type":"consiliere","questions":[
+    {"id":"q1","text":"Ora de Consiliere și orientare (Dirigenție) a fost utilă și relevantă pentru nevoile elevului?","type":"scale"},
+    {"id":"q2","text":"Temele abordate la ora de Consiliere și orientare au fost adaptate vârstei și preocupărilor elevilor?","type":"scale"},
+    {"id":"q3","text":"Elevul a participat cu interes la orele de Consiliere și orientare?","type":"scale"},
+    {"id":"q4","text":"Ce teme sau activități ați dori să fie abordate la ora de Consiliere și orientare (Dirigenție)? (opțional)","type":"text"},
+    {"id":"q5","text":"Considerați că ora de Consiliere și orientare (Dirigenție) a adus un beneficiu real elevului în acest an școlar?","type":"final"}
+  ]},
+  {"id":"together","title":"Together","teacher":"Luminița Stancu","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Together a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Together? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Together?","type":"final"}
+  ]},
+  {"id":"culture","title":"Culture and Civilization","teacher":"Luminița Stancu","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Culture and Civilization a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Culture and Civilization? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Culture and Civilization?","type":"final"}
+  ]},
+  {"id":"engleza","title":"Limba engleză","teacher":"Luminița Stancu","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Limba engleză a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Limba engleză? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Limba engleză?","type":"final"}
+  ]},
+  {"id":"istorie","title":"Istorie","teacher":"Paula Claudia Cucu","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Istorie a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Istorie? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Istorie?","type":"final"}
+  ]},
+  {"id":"matematica","title":"Matematică","teacher":"Ilinca Valentin","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Matematică a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Matematică? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Matematică?","type":"final"}
+  ]},
+  {"id":"fizica","title":"Fizică","teacher":"Mugurel Popescu","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Fizică a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Fizică? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Fizică?","type":"final"}
+  ]},
+  {"id":"chimie","title":"Chimie","teacher":"Radu Elena","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Chimie a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Chimie? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Chimie?","type":"final"}
+  ]},
+  {"id":"biologie","title":"Biologie","teacher":"Romulus Pompiliu Rizon","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Biologie a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Biologie? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Biologie?","type":"final"}
+  ]},
+  {"id":"geografie","title":"Geografie","teacher":"Anne-Marie Isabella Guranda","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Geografie a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Geografie? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Geografie?","type":"final"}
+  ]},
+  {"id":"franceza","title":"Limba franceză","teacher":"Virginia Ana Maria Ștefan","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Limba franceză a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Limba franceză? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Limba franceză?","type":"final"}
+  ]},
+  {"id":"edfizica","title":"Educație fizică și sport","teacher":"Alexandru Beldiman","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Educație fizică și sport a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul desfășoară orele într-un mod organizat și adaptat nivelului elevilor?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Educație fizică și sport? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Educație fizică și sport?","type":"final"}
+  ]},
+  {"id":"muzica","title":"Educație muzicală","teacher":"Magdalena Geambașu","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Educație muzicală a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Educație muzicală? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Educație muzicală?","type":"final"}
+  ]},
+  {"id":"informatica","title":"Informatică","teacher":"Sanda Daniela Șuteu","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Informatică a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Informatică? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Informatică?","type":"final"}
+  ]},
+  {"id":"psihologie","title":"Psihologie","teacher":"Laura Vîje","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Psihologie a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Psihologie? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Psihologie?","type":"final"}
+  ]},
+  {"id":"plastica","title":"Educație plastică","teacher":"Laura Mitru","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Educație plastică a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Educație plastică? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Educație plastică?","type":"final"}
+  ]},
+  {"id":"religie","title":"Religie","teacher":"Ionuț Gabriel Stănculescu","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Religie a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Religie? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Religie?","type":"final"}
+  ]},
+  {"id":"antreprenorial","title":"Educație antreprenorială","teacher":"Amira Felicia Catană","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina Educație antreprenorială a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de Educație antreprenorială? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la Educație antreprenorială?","type":"final"}
+  ]},
+  {"id":"tic","title":"Tehnologia informației și a comunicațiilor","teacher":"Claudiu Mircea Delea","type":"materie","questions":[
+    {"id":"q1","text":"Considerați că în acest an școlar, actul educațional la disciplina TIC a fost desfășurat conform așteptărilor dumneavoastră și ale elevului?","type":"scale"},
+    {"id":"q2","text":"Profesorul explică materia într-un mod clar și accesibil pentru elev?","type":"scale"},
+    {"id":"q3","text":"Profesorul tratează elevii cu respect și corectitudine?","type":"scale"},
+    {"id":"q4","text":"Ce considerați că s-ar putea îmbunătăți la ora de TIC? (opțional)","type":"text"},
+    {"id":"q5","text":"Dacă ați avea posibilitatea, ați dori ca în anul școlar următor copilul dumneavoastră să colaboreze cu același profesor la TIC?","type":"final"}
+  ]}
+]
+</script>
+
+<script>
+const SCALE_OPTIONS = ["Întotdeauna","De cele mai multe ori","Uneori","Rar","Niciodată"];
+const FINAL_OPTIONS = ["Da, cu siguranță","Probabil da","Nu știu","Probabil nu","Nu, în niciun caz"];
+const ADMIN_PASS = "130629";
+const DEADLINE = new Date('2026-05-25T23:59:59');
+const isExpired = () => new Date() > DEADLINE;
+
+const FLOWERS = ["TRANDAFIR","LALEA","MARGARETA","VIOLETA","CRIZANTEMA","AZALEE","BUJOR","CLOPOTEL","LAVANDA","MAGNOLIA","NARCISA","ORHIDEE","SALVIA","ALBASTRICA","FLOAREA-SOARELUI","GLADIOLA","HIBISCUS","IRIS","LILIAC","MUSETEL","NUFAR","PANSELUTA","STANJENEL","TUBEROZA","VIOREA","ZAMBILA","CACTUS","BEGONIA","FREZIE","CAMELIE","TEST","TEST2"];
+
+const STUDENTS = ["Sofia A.","Emma B.","Ciprian B.","Anastasia B.","Alessya B.","David C.","Iulia C.","Maria C.","Rebeca C.","Marisa H.","Clara H.","Carla I.","Jasmine M.","Bogdan M.","Andra M.","Tudor M.","Antonia M.","Anastasia N.","Sophia P.","Ilinca R.","Andreea R.","Serban R.","Nadin S.","Alexia S.","Carina S.","Anastasia S.","Maya S.","Alexandru T.","Irina V.","Alexia V.","Andrei M.","Florin B."];
+
+const SECTIONS = JSON.parse(document.getElementById('sections-data').textContent);
+
+let db, currentFlower=null, myAnswers={}, isSubmitted=false, expandedSection=null, allResponses={}, takenFlowers={}, commentLikes={}, unsubResp=null, unsubFlowers=null, unsubLikes=null;
+window._editingComment = null;
+
+function initApp() {
+  if (typeof firebase === 'undefined') { setTimeout(initApp, 100); return; }
+  const cfg = {
+    apiKey:"AIzaSyDvlXhBKw3pwHGneNq7olgEc7b4SqjiuqQ",
+    authDomain:"puterea-vocii-tale.firebaseapp.com",
+    projectId:"puterea-vocii-tale",
+    storageBucket:"puterea-vocii-tale.firebasestorage.app",
+    messagingSenderId:"60750339466",
+    appId:"1:60750339466:web:a6bbdf57a3b4273e10fc73"
+  };
+  if (!firebase.apps.length) firebase.initializeApp(cfg);
+  db = firebase.firestore();
+
+  // Verifica daca userul are deja o floare salvata in localStorage
+  const saved = sessionStorage.getItem('feedback_xg_flower');
+  if (saved) {
+    currentFlower = saved;
+    loadMyData();
+  }
+
+  if (isExpired()) {
+    const b = document.getElementById('deadline-banner');
+    if (b) { b.style.background='linear-gradient(135deg,#A32D2D,#c53030)'; b.innerHTML='🔒 Feedback Educațional — Clasa a X-a G &nbsp;|&nbsp; <span style="opacity:0.9">Termenul limită a <strong>expirat</strong> pe 25 mai 2026</span>'; }
+  }
+}
+
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+}
+
+function normalize(s) {
+  return s.trim().toLowerCase()
+    .replace(/ă/g,'a').replace(/â/g,'a').replace(/î/g,'i')
+    .replace(/ș/g,'s').replace(/ş/g,'s').replace(/ț/g,'t').replace(/ţ/g,'t');
+}
+
+function checkPrenume() {
+  const val = document.getElementById('prenume-input').value.trim();
+  const err = document.getElementById('prenume-error');
+  if (!val) { err.textContent='Introduceți prenumele elevului și inițiala numelui.'; err.style.display='block'; return; }
+
+  const normVal = normalize(val);
+  const match = STUDENTS.find(s => normalize(s) === normVal);
+
+  if (!match) { err.textContent='Prenumele introdus nu se regăsește în lista clasei. Verificați formatul (ex: Andrei M.)'; err.style.display='block'; return; }
+
+  err.style.display='none';
+  // Verificam daca prenumele a fost deja folosit
+  if (db) {
+    db.collection('feedback_xg_flowers').where('student','==',match).get().then(snap => {
+      if (!snap.empty) {
+        err.textContent='Acest elev a fost deja înregistrat pe platformă.';
+        err.style.display='block';
+      } else {
+        showFlowerPicker(match);
+      }
+    });
+  }
+}
+
+function showFlowerPicker(studentName) {
+  document.getElementById('flori-subtitle').textContent = 'Elev: ' + studentName + ' — Alegeți codul dumneavoastră';
+  showScreen('flori');
+
+  // Incarcam florile luate
+  db.collection('feedback_xg_flowers').onSnapshot(snap => {
+    takenFlowers = {};
+    snap.forEach(d => { takenFlowers[d.id] = d.data(); });
+    renderFlowerGrid(studentName);
+  });
+}
+
+function renderFlowerGrid(studentName) {
+  const grid = document.getElementById('flower-grid');
+  grid.innerHTML = FLOWERS.map(f => {
+    const taken = !!takenFlowers[f];
+    return `<button class="flower-btn ${taken?'taken':''}" onclick="${taken?'':'selectFlower(\''+f+'\',\''+studentName+'\')'}" ${taken?'disabled':''}>
+      🌸 ${f}
+      ${taken?'<br><span style="font-size:10px">Luată</span>':''}
+    </button>`;
+  }).join('');
+}
+
+async function selectFlower(flower, studentName) {
+  if (!confirm('Ați ales codul "' + flower + '". Această alegere este definitivă. Continuați?')) return;
+
+  try {
+    // Verificam din nou ca nu e luata
+    const check = await db.collection('feedback_xg_flowers').doc(flower).get();
+    if (check.exists) { alert('Această floare a fost aleasă de altcineva chiar acum. Alegeți alta.'); return; }
+
+    // Salvam asocierea floare-elev
+    await db.collection('feedback_xg_flowers').doc(flower).set({
+      flower, student: studentName, ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Salvam in localStorage
+    sessionStorage.setItem('feedback_xg_flower', flower);
+    currentFlower = flower;
+    await loadMyData();
+  } catch(e) { console.error(e); }
+}
+
+function loginWithFlower() {
+  const val = document.getElementById('flower-login-input').value.trim().toUpperCase();
+  const err = document.getElementById('flower-login-error');
+  if (!FLOWERS.includes(val)) { err.textContent='Cod invalid. Introduceți exact numele florii alese.'; err.style.display='block'; return; }
+
+  // Verificam ca floarea e inregistrata
+  db.collection('feedback_xg_flowers').doc(val).get().then(snap => {
+    if (!snap.exists) { err.textContent='Această floare nu a fost înregistrată încă.'; err.style.display='block'; return; }
+    err.style.display='none';
+    sessionStorage.setItem('feedback_xg_flower', val);
+    currentFlower = val;
+    loadMyData();
+  });
+}
+
+async function loadMyData() {
+  document.getElementById('loading-main').style.display='block';
+  document.getElementById('main-content').style.display='none';
+  showScreen('main');
+  try {
+    const snap = await db.collection('feedback_xg_votes').doc(currentFlower).get();
+    if (snap.exists) { const d=snap.data(); myAnswers=d.answers||{}; isSubmitted=d.submitted||false; }
+    subscribeAll();
+  } catch(e) { console.error(e); }
+}
+
+function subscribeAll(isAdmin=false) {
+  if (unsubLikes) unsubLikes();
+  unsubLikes = db.collection('feedback_xg_likes').onSnapshot(snap => {
+    commentLikes={};
+    snap.forEach(d=>{ commentLikes[d.id]=d.data(); });
+    if (expandedSection) renderSections();
+  });
+  if (unsubResp) unsubResp();
+  unsubResp = db.collection('feedback_xg_votes').onSnapshot(snap => {
+    allResponses={};
+    snap.forEach(d=>{ allResponses[d.id]=d.data(); });
+    if (isAdmin) { renderAdmin(); document.getElementById('loading-admin').style.display='none'; document.getElementById('admin-content').style.display='block'; }
+    else { document.getElementById('loading-main').style.display='none'; document.getElementById('main-content').style.display='block'; renderMain(); }
+  });
+}
+
+function doAdmin() {
+  const val = document.getElementById('admin-input').value;
+  const err = document.getElementById('admin-error');
+  if (val!==ADMIN_PASS) { err.textContent='Parolă incorectă.'; err.style.display='block'; return; }
+  err.style.display='none';
+  document.getElementById('loading-admin').style.display='block';
+  document.getElementById('admin-content').style.display='none';
+  showScreen('admin');
+  subscribeAll(true);
+  // Incarcam si asocierile floare-elev pentru admin
+  db.collection('feedback_xg_flowers').onSnapshot(snap => {
+    takenFlowers={};
+    snap.forEach(d=>{ takenFlowers[d.id]=d.data(); });
+    if (document.getElementById('admin-associations')) renderAdminAssociations();
+  });
+}
+
+async function saveDraft() {
+  await db.collection('feedback_xg_votes').doc(currentFlower).set({answers:myAnswers,submitted:false,flower:currentFlower,ts:firebase.firestore.FieldValue.serverTimestamp()});
+  showMsg('Progresul a fost salvat. ✅');
+}
+
+async function doSubmit() {
+  await db.collection('feedback_xg_votes').doc(currentFlower).set({answers:myAnswers,submitted:true,flower:currentFlower,ts:firebase.firestore.FieldValue.serverTimestamp()});
+  isSubmitted=true;
+  document.getElementById('submit-area').style.display='none';
+  document.getElementById('submitted-area').style.display='block';
+  document.getElementById('btn-save-draft').style.display='none';
+  showMsg('Feedback-ul tău a fost înregistrat! ✅');
+  renderSections();
+}
+
+function showMsg(text) {
+  const el=document.getElementById('save-msg');
+  el.textContent=text; el.style.display='block';
+  setTimeout(()=>el.style.display='none',4000);
+}
+
+function switchTab(name) {
+  ['feedback','stats'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
+    document.getElementById('tab-btn-'+t).className='tab-btn'+(t===name?' active':'');
+  });
+  if (name==='stats') renderStats();
+}
+
+function toggleSection(id) { expandedSection=expandedSection===id?null:id; renderSections(); }
+
+function setAnswer(sectionId, qId, val) {
+  if (isSubmitted) return;
+  if (!myAnswers[sectionId]) myAnswers[sectionId]={};
+  myAnswers[sectionId][qId]=val;
+  updateProgress(); renderSections();
+}
+
+function setTextAnswer(sectionId, qId, val) {
+  if (isSubmitted) return;
+  if (!myAnswers[sectionId]) myAnswers[sectionId]={};
+  myAnswers[sectionId][qId]=val;
+}
+
+function startEditComment(secId, qId) { window._editingComment=secId+'_'+qId; renderSections(); }
+function cancelEditComment() { window._editingComment=null; renderSections(); }
+function saveComment(secId, qId) {
+  const ta=document.getElementById('comment-'+secId+'-'+qId);
+  if (ta) { if(!myAnswers[secId]) myAnswers[secId]={}; myAnswers[secId][qId]=ta.value.trim(); }
+  window._editingComment=null;
+  db.collection('feedback_xg_votes').doc(currentFlower).set({answers:myAnswers,submitted:false,flower:currentFlower,ts:firebase.firestore.FieldValue.serverTimestamp()});
+  showMsg('Comentariul a fost actualizat. ✅'); renderSections();
+}
+function deleteComment(secId, qId) {
+  if (!confirm('Ștergi acest comentariu?')) return;
+  if (myAnswers[secId]) delete myAnswers[secId][qId];
+  db.collection('feedback_xg_votes').doc(currentFlower).set({answers:myAnswers,submitted:false,flower:currentFlower,ts:firebase.firestore.FieldValue.serverTimestamp()});
+  showMsg('Comentariul a fost șters. ✅'); renderSections();
+}
+
+async function likeComment(secId, qId, authorFlower) {
+  const likeKey = secId + '_' + qId + '_' + authorFlower;
+  const ref = db.collection('feedback_xg_likes').doc(likeKey);
+  const snap = await ref.get();
+  if (snap.exists) {
+    const likes = snap.data().likedBy || [];
+    if (likes.includes(currentFlower)) {
+      await ref.update({ likedBy: firebase.firestore.FieldValue.arrayRemove(currentFlower) });
+    } else {
+      await ref.update({ likedBy: firebase.firestore.FieldValue.arrayUnion(currentFlower) });
+    }
+  } else {
+    await ref.set({ secId, qId, authorFlower, likedBy: [currentFlower] });
+  }
+}
+
+function getSectionStats(sectionId, qId) {
+  const counts={};
+  Object.values(allResponses).forEach(r=>{ const v=r.answers?.[sectionId]?.[qId]; if(v) counts[v]=(counts[v]||0)+1; });
+  return counts;
+}
+
+function isSectionComplete(sectionId) {
+  const section=SECTIONS.find(s=>s.id===sectionId);
+  if (!section) return false;
+  return section.questions.filter(q=>q.type!=='text').some(q=>myAnswers[sectionId]?.[q.id]);
+}
+
+function updateProgress() {
+  const completed=SECTIONS.filter(s=>isSectionComplete(s.id)).length;
+  const pct=Math.round((completed/SECTIONS.length)*100);
+  document.getElementById('main-progress').style.width=pct+'%';
+  document.getElementById('header-sub').textContent='🌸 '+currentFlower+' · '+(isSubmitted?'✅ Finalizat':completed+'/'+SECTIONS.length+' secțiuni cu răspunsuri');
+  const info=document.getElementById('submit-info');
+  if (info) info.innerHTML='Ai completat <strong>'+completed+'</strong> din <strong>'+SECTIONS.length+'</strong> secțiuni.';
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderMain() {
+  updateProgress(); renderSections();
+  if (isExpired()) {
+    document.getElementById('submit-area').style.display='none';
+    document.getElementById('btn-save-draft').style.display='none';
+    if (!isSubmitted) { document.getElementById('submitted-area').style.display='block'; document.getElementById('submitted-area').innerHTML='<div style="font-size:32px;margin-bottom:8px">🔒</div><h3 style="font-size:16px;font-weight:700;color:#A32D2D;margin-bottom:6px">Termenul limită a expirat</h3><p style="font-size:13px;color:#666">Feedback-ul nu mai poate fi completat după 25 mai 2026.</p>'; }
+    isSubmitted=true;
+  } else if (isSubmitted) {
+    document.getElementById('submit-area').style.display='none';
+    document.getElementById('submitted-area').style.display='block';
+    document.getElementById('btn-save-draft').style.display='none';
+  }
+}
+
+function renderSections() {
+  const list=document.getElementById('sections-list');
+  if (!list) return;
+  list.innerHTML=SECTIONS.map((sec,idx)=>{
+    const isOpen=expandedSection===sec.id;
+    const complete=isSectionComplete(sec.id);
+    let body='';
+    if (isOpen) {
+      const qHtml=sec.questions.map(q=>{
+        const options=q.type==='scale'?SCALE_OPTIONS:q.type==='final'?FINAL_OPTIONS:null;
+        const myVal=myAnswers[sec.id]?.[q.id]||'';
+        const stats=getSectionStats(sec.id,q.id);
+        const totalVotes=Object.values(stats).reduce((a,b)=>a+b,0);
+        const isEditingComment=window._editingComment===sec.id+'_'+q.id;
+        let inputHtml='';
+        if (q.type==='text') {
+          if (isSubmitted&&myVal) {
+            inputHtml=`<div style="background:#f9f9f9;border-radius:8px;padding:10px 12px;border-left:3px solid #ccc"><p style="font-size:12px;color:#555;line-height:1.5">${esc(myVal)}</p></div>`;
+          } else if (isSubmitted&&!myVal) {
+            inputHtml=`<p style="font-size:12px;color:#aaa;font-style:italic">Nu ai lăsat niciun comentariu.</p>`;
+          } else if (!isSubmitted&&myVal&&!isEditingComment) {
+            inputHtml=`<div style="background:#f0fff4;border-radius:8px;padding:10px 12px;margin-bottom:6px;border-left:3px solid #2E7D32"><p style="font-size:12px;color:#333;line-height:1.5;margin-bottom:8px">${esc(myVal)}</p><div style="display:flex;gap:6px"><button class="btn-edit" onclick="startEditComment('${sec.id}','${q.id}')">✏️ Editează</button><button class="btn-danger" onclick="deleteComment('${sec.id}','${q.id}')">🗑️ Șterge</button></div></div>`;
+          } else {
+            inputHtml=`<textarea id="comment-${sec.id}-${q.id}" rows="3" placeholder="Scrieți comentariul dumneavoastră... (opțional)" oninput="setTextAnswer('${sec.id}','${q.id}',this.value)">${esc(myVal)}</textarea>`;
+            if (isEditingComment) inputHtml+=`<div style="display:flex;gap:6px;margin-top:6px"><button class="btn-primary" onclick="saveComment('${sec.id}','${q.id}')" style="font-size:12px;padding:5px 12px">💾 Salvează</button><button onclick="cancelEditComment()" style="font-size:12px;padding:5px 12px">✕ Anulează</button></div>`;
+          }
+          // Comentariile celorlalti
+          const otherComments=Object.entries(allResponses).filter(([f,r])=>f!==currentFlower&&r.answers?.[sec.id]?.[q.id]?.trim());
+          if (otherComments.length>0) {
+            inputHtml+=`<div style="margin-top:10px"><p style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:6px">💬 Comentariile celorlalți:</p>`+
+              otherComments.map(([f,r])=>{
+                const likeKey=sec.id+'_'+q.id+'_'+f;
+                const likeData=commentLikes[likeKey];
+                const likeCount=likeData?.likedBy?.length||0;
+                const iLiked=likeData?.likedBy?.includes(currentFlower)||false;
+                return `<div style="border-left:3px solid #97C459;padding:8px 10px;margin-bottom:6px;border-radius:0 6px 6px 0;background:#f0fff4">
+                  <span style="font-size:11px;font-weight:700;color:#2E7D32">🌸 ${esc(f)}</span>
+                  <p style="font-size:12px;color:#555;margin:4px 0 8px;line-height:1.5">${esc(r.answers[sec.id][q.id])}</p>
+                  <button onclick="likeComment('${sec.id}','${q.id}','${f}')" style="background:${iLiked?'#EAF3DE':'#f0f0f0'};border:1px solid ${iLiked?'#2E7D32':'#ddd'};color:${iLiked?'#1B5E20':'#555'};font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer">
+                    👍 Susțin ${likeCount}
+                  </button>
+                  ${iLiked?'<span style="font-size:11px;color:#2E7D32;margin-left:6px">✓ Ai susținut</span>':''}
+                </div>`;
+              }).join('')+'</div>';
+          }
+        } else if (options) {
+          inputHtml='<div>'+options.map(opt=>{
+            const count=stats[opt]||0, pct=totalVotes>0?Math.round((count/totalVotes)*100):0;
+            return `<div class="radio-option ${myVal===opt?'selected':''}" onclick="${!isSubmitted?`setAnswer('${sec.id}','${q.id}','${opt}')`:''}" style="${isSubmitted?'cursor:default':''}"><span style="flex:1">${esc(opt)}</span>${totalVotes>0?`<span style="font-size:11px;color:#888;white-space:nowrap">${count} (${pct}%)</span>`:''}</div>`;
+          }).join('')+'</div>';
+        }
+        return `<div class="question-block"><p class="question-text">${esc(q.text)}</p>${inputHtml}</div>`;
+      }).join('');
+      body=`<div class="section-body">${qHtml}</div>`;
+    }
+    const typeLabel=sec.type==='diriginta'?'🎓 Dirigintă':sec.type==='consiliere'?'💬 Consiliere':'📚 Materie';
+    return `<div class="section-card ${complete?'completed':''}">
+      <div class="section-header" onclick="toggleSection('${sec.id}')">
+        <span class="tag tag-info" style="min-width:36px;text-align:center">${idx+1}/${SECTIONS.length}</span>
+        <div style="flex:1"><p style="font-size:14px;font-weight:700">${esc(sec.title)}</p><p style="font-size:11px;color:#888;margin-top:2px">👤 ${esc(sec.teacher)} · <span style="color:#2E7D32">${typeLabel}</span></p></div>
+        ${complete?'<span style="font-size:18px">✅</span>':''}
+        <span style="color:#bbb;font-size:14px">${isOpen?'▲':'▼'}</span>
+      </div>
+      ${body}
+    </div>`;
+  }).join('');
+  updateProgress();
+}
+
+function renderStats() {
+  const total=Object.keys(allResponses).length, submitted=Object.values(allResponses).filter(e=>e.submitted).length;
+  document.getElementById('stats-summary').innerHTML=[
+    {l:'Elevi participanți',v:total,c:'#2E7D32'},{l:'Feedback finalizat',v:submitted,c:'#1B5E20'},
+    {l:'În progres',v:total-submitted,c:'#F57F17'},{l:'Total elevi cls.',v:30,c:'#1565C0'}
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
+  document.getElementById('stats-list').innerHTML=SECTIONS.map(sec=>{
+    const qStats=sec.questions.filter(q=>q.type!=='text').map(q=>{
+      const stats=getSectionStats(sec.id,q.id), totalVotes=Object.values(stats).reduce((a,b)=>a+b,0);
+      const options=q.type==='scale'?SCALE_OPTIONS:FINAL_OPTIONS;
+      return `<div style="margin-bottom:8px"><p style="font-size:11px;color:#555;margin-bottom:4px">${esc(q.text)}</p>`+
+        options.map(opt=>{const count=stats[opt]||0,pct=totalVotes>0?Math.round((count/totalVotes)*100):0;return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:11px;width:160px;flex-shrink:0">${esc(opt)}</span><div style="flex:1;background:#f0f0f0;border-radius:99px;height:6px;overflow:hidden"><div style="width:${pct}%;background:#2E7D32;height:100%;border-radius:99px"></div></div><span style="font-size:11px;color:#888;width:50px">${count} (${pct}%)</span></div>`;}).join('')+'</div>';
+    }).join('');
+    // Adaugam si comentariile
+    const comments = sec.questions.filter(q=>q.type==='text').map(q => {
+      const commentsList = Object.entries(allResponses).filter(([,r])=>r.answers?.[sec.id]?.[q.id]?.trim());
+      if (!commentsList.length) return '';
+      return `<div style="margin-top:12px;border-top:1px solid #eee;padding-top:10px">
+        <p style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:8px">💬 Comentarii și sugestii (${commentsList.length}):</p>` +
+        commentsList.map(([f,r]) => {
+          const likeKey = sec.id+'_'+q.id+'_'+f;
+          const likeData = commentLikes[likeKey];
+          const likeCount = likeData?.likedBy?.length||0;
+          return `<div style="border-left:3px solid #97C459;padding:8px 10px;margin-bottom:6px;border-radius:0 6px 6px 0;background:#f0fff4">
+            <span style="font-size:11px;font-weight:700;color:#2E7D32">🌸 ${esc(f)}</span>
+            <p style="font-size:12px;color:#555;margin:4px 0 6px;line-height:1.5">${esc(r.answers[sec.id][q.id])}</p>
+            ${likeCount>0?`<span style="font-size:11px;background:#EAF3DE;color:#1B5E20;padding:2px 8px;border-radius:20px;font-weight:600">👍 ${likeCount} susțineri</span>`:''}
+          </div>`;
+        }).join('') + '</div>';
+    }).join('');
+    return `<div class="section-card" style="padding:14px 16px;margin-bottom:10px"><p style="font-size:14px;font-weight:700;margin-bottom:3px">${esc(sec.title)}</p><p style="font-size:11px;color:#888;margin-bottom:12px">👤 ${esc(sec.teacher)}</p>${qStats||'<p style="font-size:12px;color:#aaa">Niciun răspuns încă.</p>'}${comments}</div>`;
+  }).join('');
+}
+
+function renderAdmin() {
+  const total=Object.keys(allResponses).length, submitted=Object.values(allResponses).filter(e=>e.submitted).length;
+  document.getElementById('admin-overview').innerHTML=[
+    {l:'Elevi înregistrați',v:total,c:'#2E7D32'},{l:'Feedback finalizat',v:submitted,c:'#1B5E20'},
+    {l:'În progres',v:total-submitted,c:'#F57F17'},{l:'Total elevi cls.',v:30,c:'#1565C0'}
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.c}"><p style="font-size:26px;font-weight:700;color:${s.c}">${s.v}</p><p style="font-size:12px;color:#888;margin-top:4px">${s.l}</p></div>`).join('');
+  renderAdminAssociations();
+  document.getElementById('admin-sections').innerHTML=SECTIONS.map(sec=>{
+    const qHtml=sec.questions.map(q=>{
+      if (q.type==='text') {
+        const comments=Object.entries(allResponses).filter(([,r])=>r.answers?.[sec.id]?.[q.id]?.trim());
+        if (!comments.length) return '';
+        return `<div style="margin-bottom:10px"><p style="font-size:11px;font-weight:700;color:#555;margin-bottom:4px">${esc(q.text)}</p>`+comments.map(([f,r])=>`<div style="border-left:3px solid #97C459;padding:6px 10px;margin-bottom:3px;border-radius:0 6px 6px 0;background:#f0fff4"><span style="font-size:11px;font-weight:700;color:#2E7D32">🌸 ${esc(f)}</span><p style="font-size:12px;color:#555;margin:3px 0 0">${esc(r.answers[sec.id][q.id])}</p></div>`).join('')+'</div>';
+      }
+      const stats=getSectionStats(sec.id,q.id), totalVotes=Object.values(stats).reduce((a,b)=>a+b,0);
+      const options=q.type==='scale'?SCALE_OPTIONS:FINAL_OPTIONS;
+      return `<div style="margin-bottom:10px"><p style="font-size:11px;font-weight:700;color:#555;margin-bottom:4px">${esc(q.text)}</p>`+options.map(opt=>{const count=stats[opt]||0,pct=totalVotes>0?Math.round((count/totalVotes)*100):0;return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:11px;width:160px;flex-shrink:0">${esc(opt)}</span><div style="flex:1;background:#f0f0f0;border-radius:99px;height:6px;overflow:hidden"><div style="width:${pct}%;background:#2E7D32;height:100%;border-radius:99px"></div></div><span style="font-size:11px;color:#888;width:50px">${count} (${pct}%)</span></div>`;}).join('')+'</div>';
+    }).join('');
+    return `<div class="section-card" style="padding:16px;margin-bottom:10px"><p style="font-size:14px;font-weight:700;margin-bottom:2px">${esc(sec.title)}</p><p style="font-size:11px;color:#888;margin-bottom:12px">👤 ${esc(sec.teacher)}</p>${qHtml||'<p style="font-size:12px;color:#aaa">Niciun răspuns încă.</p>'}</div>`;
+  }).join('');
+}
+
+function renderAdminAssociations() {
+  const el=document.getElementById('admin-associations');
+  if (!el) return;
+  if (!Object.keys(takenFlowers).length) { el.innerHTML='<p style="font-size:13px;color:#aaa">Niciun elev înregistrat încă.</p>'; return; }
+  el.innerHTML=Object.entries(takenFlowers).map(([flower,data])=>{
+    const hasResponse=!!allResponses[flower];
+    const submitted=allResponses[flower]?.submitted;
+    return `<div class="stat-card" style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <p style="font-size:12px;font-weight:700;color:#2E7D32">🌸 ${esc(flower)}</p>
+        <p style="font-size:11px;color:#666">${esc(data.student||'')}</p>
+      </div>
+      <span style="font-size:18px">${submitted?'✅':hasResponse?'⏳':'⬜'}</span>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(initApp, 50); });
+</script>
+</body>
+</html>
