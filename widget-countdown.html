@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Widget Countdown</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --text-2xl: clamp(2rem, 1.2rem + 2.5vw, 3.5rem);
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-12: 3rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      --color-bg: #f7f6f2;
+      --color-surface: #f9f8f5;
+      --color-surface-2: #fbfbf9;
+      --color-border: #d4d1ca;
+      --color-text: #28251d;
+      --color-text-muted: #7a7974;
+      --color-primary: #01696f;
+      --color-primary-hover: #0c4e54;
+      --color-primary-highlight: #cedcd8;
+      --shadow-md: 0 4px 12px rgba(40, 37, 29, 0.08);
+      --font-body: 'Satoshi', Inter, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --color-bg: #171614;
+      --color-surface: #1c1b19;
+      --color-surface-2: #201f1d;
+      --color-border: #393836;
+      --color-text: #cdccca;
+      --color-text-muted: #979591;
+      --color-primary: #4f98a3;
+      --color-primary-hover: #227f8b;
+      --color-primary-highlight: #313b3b;
+      --shadow-md: 0 10px 30px rgba(0,0,0,0.28);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background:
+        radial-gradient(circle at top right, rgba(1, 105, 111, 0.10), transparent 28%),
+        linear-gradient(180deg, var(--color-bg), var(--color-surface));
+      display: grid;
+      place-items: center;
+      padding: var(--space-6);
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(100%, 920px);
+      background: color-mix(in oklab, var(--color-surface) 90%, white 10%);
+      border: 1px solid rgba(122, 121, 116, 0.18);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid rgba(122, 121, 116, 0.18);
+      background: color-mix(in oklab, var(--color-surface-2) 92%, var(--color-primary-highlight) 8%);
+    }
+
+    .brand {
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .theme-toggle {
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 999px;
+      border: 1px solid rgba(122, 121, 116, 0.18);
+      background: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: var(--space-6);
+      padding: var(--space-6);
+    }
+
+    .panel {
+      background: var(--color-surface-2);
+      border: 1px solid rgba(122, 121, 116, 0.16);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+    }
+
+    h1 {
+      margin: 0 0 var(--space-3);
+      font-size: var(--text-2xl);
+      line-height: 1.1;
+    }
+
+    p {
+      margin: 0 0 var(--space-6);
+      color: var(--color-text-muted);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    label {
+      display: grid;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+      font-weight: 500;
+    }
+
+    input[type="text"], input[type="datetime-local"] {
+      width: 100%;
+      min-height: 48px;
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+    }
+
+    input:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+    }
+
+    .btn {
+      min-height: 46px;
+      padding: 0.8rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: 180ms ease;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .btn-primary:hover { background: var(--color-primary-hover); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-text);
+      border-color: rgba(122, 121, 116, 0.25);
+    }
+
+    .countdown-wrap {
+      display: grid;
+      gap: var(--space-4);
+      align-content: start;
+    }
+
+    .countdown-header {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-4);
+      align-items: start;
+    }
+
+    .countdown-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .target-date {
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+
+    .countdown-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-3);
+    }
+
+    .unit {
+      background: linear-gradient(180deg, var(--color-surface), var(--color-surface-2));
+      border: 1px solid rgba(122, 121, 116, 0.18);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      text-align: center;
+    }
+
+    .value {
+      display: block;
+      font-size: clamp(2rem, 1.2rem + 2vw, 3.25rem);
+      line-height: 1;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: var(--space-2);
+    }
+
+    .unit-label {
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .status {
+      min-height: 1.5em;
+      color: var(--color-primary);
+      font-size: var(--text-sm);
+      font-weight: 500;
+    }
+
+    .embed-box {
+      margin-top: var(--space-4);
+      padding: var(--space-4);
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      border: 1px dashed rgba(122, 121, 116, 0.28);
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 760px) {
+      .content { grid-template-columns: 1fr; }
+      .countdown-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .topbar, .countdown-header { align-items: center; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <div class="brand">Widget countdown</div>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Schimbă tema">🌙</button>
+    </div>
+
+    <section class="content">
+      <div class="panel">
+        <h1>Numărătoare inversă până la o dată aleasă</h1>
+        <p>Completezi data, alegi un titlu și widgetul începe imediat să scadă zilele, orele, minutele și secundele.</p>
+
+        <div class="form-grid">
+          <label>
+            Titlu eveniment
+            <input id="eventTitle" type="text" value="Examen titularizare" placeholder="Ex: Vacanță, eveniment, deadline" />
+          </label>
+
+          <label>
+            Data și ora țintă
+            <input id="targetDate" type="datetime-local" />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="button" id="startBtn">Pornește countdown</button>
+          <button class="btn btn-secondary" type="button" id="sampleBtn">Exemplu rapid</button>
+        </div>
+      </div>
+
+      <div class="panel countdown-wrap">
+        <div class="countdown-header">
+          <div>
+            <h2 class="countdown-title" id="displayTitle">Examen titularizare</h2>
+            <div class="target-date" id="displayDate">Alege o dată pentru pornire</div>
+          </div>
+        </div>
+
+        <div class="countdown-grid" aria-live="off">
+          <div class="unit"><span class="value" id="days">00</span><span class="unit-label">Zile</span></div>
+          <div class="unit"><span class="value" id="hours">00</span><span class="unit-label">Ore</span></div>
+          <div class="unit"><span class="value" id="minutes">00</span><span class="unit-label">Minute</span></div>
+          <div class="unit"><span class="value" id="seconds">00</span><span class="unit-label">Secunde</span></div>
+        </div>
+
+        <p class="status" id="statusText">Widgetul așteaptă o dată țintă.</p>
+        <div class="sr-only" aria-live="polite" id="screenReaderStatus"></div>
+
+        <div class="embed-box">
+          Poți integra acest fișier ca pagină simplă sau îl poți deschide local în browser și modifica data direct din formular.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const html = document.documentElement;
+    const themeToggle = document.querySelector('[data-theme-toggle]');
+    let currentTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    html.setAttribute('data-theme', currentTheme);
+    themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+
+    themeToggle.addEventListener('click', () => {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', currentTheme);
+      themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    });
+
+    const titleInput = document.getElementById('eventTitle');
+    const dateInput = document.getElementById('targetDate');
+    const startBtn = document.getElementById('startBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
+
+    const displayTitle = document.getElementById('displayTitle');
+    const displayDate = document.getElementById('displayDate');
+    const statusText = document.getElementById('statusText');
+    const srStatus = document.getElementById('screenReaderStatus');
+
+    const daysEl = document.getElementById('days');
+    const hoursEl = document.getElementById('hours');
+    const minutesEl = document.getElementById('minutes');
+    const secondsEl = document.getElementById('seconds');
+
+    let countdownTarget = null;
+    let timerId = null;
+
+    function pad(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function updateThemeLabel() {
+      themeToggle.setAttribute('aria-label', currentTheme === 'dark' ? 'Schimbă pe tema deschisă' : 'Schimbă pe tema închisă');
+    }
+    updateThemeLabel();
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat('ro-RO', {
+        dateStyle: 'full',
+        timeStyle: 'short'
+      }).format(date);
+    }
+
+    function setValues(days, hours, minutes, seconds) {
+      daysEl.textContent = pad(days);
+      hoursEl.textContent = pad(hours);
+      minutesEl.textContent = pad(minutes);
+      secondsEl.textContent = pad(seconds);
+    }
+
+    function tick() {
+      if (!countdownTarget) return;
+
+      const diff = countdownTarget.getTime() - Date.now();
+
+      if (diff <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+        setValues(0, 0, 0, 0);
+        statusText.textContent = 'Timpul a expirat.';
+        srStatus.textContent = 'Numărătoarea inversă s-a încheiat.';
+        return;
+      }
+
+      const totalSeconds = Math.floor(diff / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      setValues(days, hours, minutes, seconds);
+      statusText.textContent = 'Countdown activ.';
+
+      if (seconds % 15 === 0) {
+        srStatus.textContent = `Au rămas ${days} zile, ${hours} ore și ${minutes} minute.`;
+      }
+    }
+
+    function startCountdown() {
+      const title = titleInput.value.trim() || 'Eveniment';
+      const rawValue = dateInput.value;
+
+      if (!rawValue) {
+        statusText.textContent = 'Te rog să alegi o dată și o oră.';
+        srStatus.textContent = 'Lipsește data țintă.';
+        return;
+      }
+
+      const target = new Date(rawValue);
+
+      if (Number.isNaN(target.getTime())) {
+        statusText.textContent = 'Data introdusă nu este validă.';
+        srStatus.textContent = 'Data introdusă nu este validă.';
+        return;
+      }
+
+      displayTitle.textContent = title;
+      displayDate.textContent = formatDate(target);
+      countdownTarget = target;
+
+      if (timerId) clearInterval(timerId);
+      tick();
+      timerId = setInterval(tick, 1000);
+    }
+
+    function setSampleDate() {
+      const sample = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000 + 30 * 60 * 1000);
+      const offset = sample.getTimezoneOffset();
+      const local = new Date(sample.getTime() - offset * 60000).toISOString().slice(0, 16);
+      titleInput.value = 'Exemplu: eveniment important';
+      dateInput.value = local;
+      startCountdown();
+    }
+
+    startBtn.addEventListener('click', startCountdown);
+    sampleBtn.addEventListener('click', setSampleDate);
+  </script>
+</body>
+</html>
